@@ -50,6 +50,21 @@ function stored(key: string, fallback: () => string) {
   } catch { return fallback(); }
 }
 
+export function useChallengerIdentity() {
+  const [challenger, setName] = useState(() => stored("arena-challenger", () => ""));
+  const [participantId, setParticipantId] = useState(() => stored("arena-participant", () => crypto.randomUUID()));
+  return {
+    challenger, participantId,
+    setChallenger(value: string) { setName(value); try { localStorage.setItem("arena-challenger", value); } catch { /* Storage can be disabled. */ } },
+    newParticipant() {
+      const next = crypto.randomUUID();
+      setParticipantId(next);
+      try { localStorage.setItem("arena-participant", next); } catch { /* Storage can be disabled. */ }
+      return next;
+    }
+  };
+}
+
 export function useGameSession(game: string, phase: string, score: number) {
   const [challenger, setName] = useState(() => stored("arena-challenger", () => ""));
   const [participantId] = useState(() => stored("arena-participant", () => crypto.randomUUID()));

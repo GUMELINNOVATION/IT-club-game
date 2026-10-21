@@ -8,6 +8,7 @@ import { database, closeDatabase } from "./database.js";
 import { requireAdmin, verifyPassword, writeAuditLog } from "./auth.js";
 import { SQLiteSessionStore } from "./session-store.js";
 import { createArena, gameIds } from "./arena.js";
+import { mythRouter } from "./myth-fact/routes.js";
 
 const app = express();
 const arena = createArena(database);
@@ -32,6 +33,7 @@ app.use(
     }
   })
 );
+app.use("/api/myth/admin", express.json({ limit: "2mb" }));
 app.use(express.json({ limit: "32kb" }));
 app.use(
   session({
@@ -60,6 +62,8 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
+app.use("/api/myth", mythRouter(publish));
+
 app.use("/api", (_req, res, next) => { res.setHeader("Cache-Control", "no-store"); next(); });
 app.get("/api/events", (req, res) => {
   res.set({ "Content-Type": "text/event-stream", "Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no" });
@@ -82,6 +86,7 @@ app.use("/api/play", playLimiter);
 app.post("/api/play", (req, res) => {
   const input = z.object({ participantId: z.uuid(), game: z.enum(gameIds), challenger: z.string().trim().max(24) }).safeParse(req.body);
   if (!input.success) { res.status(400).json({ error: "Enter a valid challenger name and game." }); return; }
+  if (input.data.game === "myth-fact") { res.status(400).json({ error: "Start Myth or Fact through its server-controlled game flow." }); return; }
   const id = arena.start(input.data.participantId, input.data.game, input.data.challenger);
   publish();
   res.status(201).json({ id });

@@ -10,6 +10,7 @@ import {
   LockKeyhole,
   Menu,
   Orbit,
+  Scale,
   Shield,
   Sparkles,
   Waypoints,
@@ -23,9 +24,13 @@ import TargetRushGame from "../games/target-rush/TargetRushGame";
 import PerfectAlignGame from "../games/perfect-align/PerfectAlignGame";
 import BrainFirewallGame from "../games/brain-firewall/BrainFirewallGame";
 import SnakeGame from "../games/snake/SnakeGame";
+import MythFactGame from "../games/myth-fact/MythFactGame";
 import { useLiveData, type Overview, type Rankings } from "./arena-data";
+import { setSoundMuted, soundIsMuted } from "./sound";
+import MythFactAdmin from "./MythFactAdmin";
+import CyberLab from "./CyberLab";
 
-type Page = "home" | "games" | "zero-point" | "target-rush" | "perfect-align" | "brain-firewall" | "snake" | "leaderboard" | "cyber-lab" | "admin";
+type Page = "home" | "games" | "zero-point" | "target-rush" | "perfect-align" | "brain-firewall" | "snake" | "myth-fact" | "leaderboard" | "cyber-lab" | "admin";
 type AdminUser = { id: number; username: string; role: string };
 
 const games = [
@@ -34,7 +39,7 @@ const games = [
     id: "zero-point",
     title: "Zero Point",
     category: "PRECISION",
-    description: "Stop the clock at exactly the right moment. Every millisecond matters.",
+    description: "A new random target every round. Stop the clock at the right moment. Every millisecond matters.",
     difficulty: "FOCUS REQUIRED",
     duration: "4–6 MIN",
     icon: Timer,
@@ -70,7 +75,7 @@ const games = [
     id: "brain-firewall",
     title: "Brain Firewall",
     category: "KNOWLEDGE",
-    description: "Challenge what you know about tech, privacy, and the digital world.",
+    description: "Pick Random Mix, Frontend, Backend, Security, or more. Test real-world skills and general knowledge.",
     difficulty: "ALL LEVELS",
     duration: "3–5 MIN",
     icon: Shield,
@@ -88,6 +93,18 @@ const games = [
     icon: Waypoints,
     color: "mint",
     record: "—"
+  },
+  {
+    number: "06",
+    id: "myth-fact",
+    title: "Myth or Fact",
+    category: "DIGITAL TRUTH",
+    description: "Separate digital truth from fiction. Six modes, confidence stakes, streaks, and a final challenge.",
+    difficulty: "ALL LEVELS",
+    duration: "3–6 MIN",
+    icon: Scale,
+    color: "cyan",
+    record: "—"
   }
 ];
 
@@ -103,7 +120,7 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [admin, setAdmin] = useState<AdminUser | null>(null);
   const [loginOpen, setLoginOpen] = useState(false);
-  const [muted, setMuted] = useState(true);
+  const [muted, setMuted] = useState(() => soundIsMuted());
   const [health, setHealth] = useState<"checking" | "online" | "offline">("checking");
 
   useEffect(() => {
@@ -166,7 +183,7 @@ function App() {
 
         <div className="top-actions">
           <span className="live-status"><i className={health === "online" ? "status-dot" : "status-dot muted-dot"} />{health === "online" ? "SYSTEM ONLINE" : health === "offline" ? "OFFLINE MODE" : "CONNECTING"}</span>
-          <button className="icon-button sound-button" onClick={() => setMuted(!muted)} aria-label={muted ? "Enable sound" : "Mute sound"} title={muted ? "Sound off" : "Sound on"}>
+          <button className="icon-button sound-button" onClick={() => { const next = !muted; setMuted(next); setSoundMuted(next); }} aria-label={muted ? "Enable sound" : "Mute sound"} title={muted ? "Sound off" : "Sound on"}>
             <AudioLines size={17} className={muted ? "sound-muted" : ""} />
           </button>
           {admin && <button className="admin-button" onClick={() => navigate("admin")}><LockKeyhole size={14} />Admin</button>}
@@ -184,8 +201,9 @@ function App() {
         {page === "perfect-align" && <PerfectAlignGame onBack={() => navigate("games")} />}
         {page === "brain-firewall" && <BrainFirewallGame onBack={() => navigate("games")} />}
         {page === "snake" && <SnakeGame onBack={() => navigate("games")} />}
+        {page === "myth-fact" && <MythFactGame onBack={() => navigate("games")} />}
         {page === "leaderboard" && <LeaderboardPage />}
-        {page === "cyber-lab" && <CyberLabPage />}
+        {page === "cyber-lab" && <CyberLab />}
         {page === "admin" && <AdminPage admin={admin} onLogout={() => {
           fetch("/api/admin/logout", { method: "POST" }).then(() => { setAdmin(null); navigate("home"); });
         }} />}
@@ -216,7 +234,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: Page) => void }) {
         <div className="hero-copy">
           <div className="eyebrow"><span className="eyebrow-line" /> YOUR NEXT MISSION STARTS HERE</div>
           <h1>PLAY THE<br /><span>UNKNOWN.</span></h1>
-          <p className="hero-description">Five challenges. One arena. Test your reflexes, sharpen your instincts, and find out if you've got what it takes.</p>
+          <p className="hero-description">Six challenges. One arena. Test your reflexes, sharpen your instincts, and find out if you've got what it takes.</p>
           <div className="hero-buttons">
             <button className="primary-button" onClick={() => onNavigate("games")}>ENTER THE ARENA <ArrowUpRight size={17} /></button>
             <button className="text-button" onClick={() => onNavigate("leaderboard")}><Trophy size={15} /> VIEW HALL OF FAME</button>
@@ -242,18 +260,20 @@ function HomePage({ onNavigate }: { onNavigate: (page: Page) => void }) {
 
       <section className="challenge-section">
         <div className="section-heading">
-          <div><span className="eyebrow"><span className="eyebrow-line" /> CHOOSE YOUR CHALLENGE</span><h2>Five ways to <span>make your mark.</span></h2></div>
+          <div><span className="eyebrow"><span className="eyebrow-line" /> CHOOSE YOUR CHALLENGE</span><h2>Six ways to <span>make your mark.</span></h2></div>
           <button className="section-link" onClick={() => onNavigate("games")}>ALL CHALLENGES <ArrowUpRight size={15} /></button>
         </div>
         <div className="game-grid">
           {games.map(({ id, number, title, category, description, difficulty, duration, icon: Icon, color }) => (
-            <article className={`game-card ${color}`} key={title}>
+            <article className={`game-card ${color}`} key={title} role="button" tabIndex={0} aria-label={`Play ${title}`}
+              onClick={() => onNavigate(id as Page)}
+              onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onNavigate(id as Page); } }}>
               <div className="card-top"><span className="card-number">{number} <span>/ {String(games.length).padStart(2, "0")}</span></span><Icon className="game-icon" size={21} strokeWidth={1.6} /></div>
               <span className="game-category">{category}</span>
               <h3>{title}</h3>
               <p>{description}</p>
               <div className="card-data"><span>{difficulty}</span><span>{duration}</span></div>
-              <div className="card-bottom"><span>TOP SCORE <b>{records?.[id]?.entries[0]?.score.toLocaleString() ?? (error ? "OFFLINE" : records ? "—" : "…")}</b></span><button className="card-play card-play-button" onClick={() => onNavigate(id as Page)}>PLAY <ChevronRight size={15} /></button></div>
+              <div className="card-bottom"><span>TOP SCORE <b>{records?.[id]?.entries[0]?.score.toLocaleString() ?? (error ? "OFFLINE" : records ? "—" : "…")}</b></span><span className="card-play">PLAY <ChevronRight size={15} /></span></div>
             </article>
           ))}
         </div>
@@ -275,10 +295,12 @@ function HomePage({ onNavigate }: { onNavigate: (page: Page) => void }) {
 }
 
 function GamesPage({ onNavigate }: { onNavigate: (page: Page) => void }) {
-  return <div className="page-content interior-page"><PageHeading label="SELECT YOUR MISSION" title={<>THE <span>ARENA.</span></>} description="Five playable challenges. Choose your mission, read its quick guide, and take on the arena." />
-    <div className="game-grid expanded-games">{games.map(({ id, number, title, category, description, difficulty, duration, icon: Icon, color }) => <article className={`game-card ${color}`} key={title}>
+  return <div className="page-content interior-page"><PageHeading label="SELECT YOUR MISSION" title={<>THE <span>ARENA.</span></>} description="Six playable challenges. Choose your mission, read its quick guide, and take on the arena." />
+    <div className="game-grid expanded-games">{games.map(({ id, number, title, category, description, difficulty, duration, icon: Icon, color }) => <article className={`game-card ${color}`} key={title} role="button" tabIndex={0} aria-label={`Play ${title}`}
+      onClick={() => onNavigate(id as Page)}
+      onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onNavigate(id as Page); } }}>
       <div className="card-top"><span className="card-number">{number} <span>/ {String(games.length).padStart(2, "0")}</span></span><Icon className="game-icon" size={21} /></div><span className="game-category">{category}</span><h3>{title}</h3><p>{description}</p>
-      <div className="card-data"><span>{difficulty}</span><span>{duration}</span></div><button className="card-bottom play-row" onClick={() => onNavigate(id as Page)}><span>{id === "snake" ? "ARROW KEYS · + / − PICKUPS" : `${category} CHALLENGE`}</span><span className="card-play">PLAY <ChevronRight size={15} /></span></button>
+      <div className="card-data"><span>{difficulty}</span><span>{duration}</span></div><div className="card-bottom play-row"><span>{id === "snake" ? "ARROW KEYS · + / − PICKUPS" : `${category} CHALLENGE`}</span><span className="card-play">PLAY <ChevronRight size={15} /></span></div>
     </article>)}</div>
   </div>;
 }
@@ -286,30 +308,42 @@ function GamesPage({ onNavigate }: { onNavigate: (page: Page) => void }) {
 function LeaderboardPage() {
   const [selected, setSelected] = useState(games[0].id);
   const { data, error, live } = useLiveData<Rankings>(`/api/leaderboard/${selected}`);
-  return <div className="page-content interior-page"><PageHeading label="THE BEST OF THE BEST" title={<>HALL OF <span>FAME.</span></>} description="Every legend starts with a first attempt. Make yours count." />
+  return <div className="page-content interior-page"><PageHeading label="THE BEST OF THE BEST" title={<>HALL OF <span>FAME.</span></>} description="Every legend starts with a first attempt. Myth or Fact boards are split by mode and rule version so only comparable runs compete." />
     <div className="leaderboard-panel">
       <div className="leaderboard-tabs" role="tablist" aria-label="Game rankings">{games.map((game) => <button role="tab" aria-selected={selected === game.id} aria-controls="game-rankings" id={`tab-${game.id}`} className={selected === game.id ? "selected" : ""} key={game.id} onClick={() => setSelected(game.id)}>{game.title.toUpperCase()}</button>)}</div>
-      <div id="game-rankings" role="tabpanel" aria-labelledby={`tab-${selected}`} aria-busy={!data && !error}>
+      {selected === "myth-fact" ? <MythFactLeaderboard /> : <div id="game-rankings" role="tabpanel" aria-labelledby={`tab-${selected}`} aria-busy={!data && !error}>
         <div className="leaderboard-head"><span>RANK</span><span>CHALLENGER</span><span>SCORE</span><span>DATE</span></div>
         {error && <div className="ranking-error" role="status">Connection interrupted. {data ? "Showing the last received rankings." : "Reconnecting to the arena…"}</div>}
         {data?.entries.length ? <div className="leaderboard-rows">{data.entries.map((entry) => <div className={`leaderboard-row ${entry.rank <= 3 ? "podium-row" : ""}`} key={entry.id}><span className="rank-number">{entry.rank <= 3 && <Trophy size={14} />} {String(entry.rank).padStart(2, "0")}</span><strong>{entry.challenger}</strong><b>{entry.score.toLocaleString()}</b><time dateTime={new Date(entry.completedAt).toISOString()} title={new Date(entry.completedAt).toLocaleString()}>{new Date(entry.completedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</time></div>)}</div> : <div className="leaderboard-empty"><Trophy size={28} /><strong>{!data ? error ? "RANKINGS UNAVAILABLE" : "LOADING RANKINGS…" : "THE PODIUM IS EMPTY"}</strong><p>{!data ? "Connecting to live event scores." : "Be the first to put your name on the board."}</p><span>THE NEXT RECORD COULD BE YOURS</span></div>}
-      </div>
+      </div>}
       <div className="leaderboard-foot"><span>LIVE EVENT RANKINGS · BEST RUN PER CHALLENGER</span><span>{live ? "UPDATED IN REAL TIME" : error ? "RECONNECTING" : "AUTO REFRESH · 15 SEC"} <i className={`status-dot ${live ? "" : "muted-dot"}`} /></span></div>
     </div>
   </div>;
 }
 
-function CyberLabPage() {
-  const experiments = [
-    ["01", "Social Engineering Detective", "Discover how everyday details can reveal clues — using a completely fictional profile."],
-    ["02", "QR Code Trust Test", "Learn to inspect hidden destinations and spot suspicious links before you tap."],
-    ["03", "Spot the Phishing Attempt", "Put your instincts to the test with simulated messages and websites."],
-    ["04", "Public Wi-Fi Awareness", "Can you tell which network is trustworthy? Hint: names can be misleading."],
-    ["05", "Digital Footprint Challenge", "Explore the privacy clues hidden in a fictional social profile."]
-  ];
-  return <div className="page-content interior-page"><PageHeading label="SAFE BY DESIGN · NEVER COLLECTS REAL PASSWORDS" title={<>THE CYBER <span>LAB.</span></>} description="Curiosity is your best defense. Explore how small clues can make a big difference online." />
-    <div className="lab-grid">{experiments.map(([number, title, description]) => <article className="lab-card" key={title}><span className="lab-number">{number}</span><span className="lab-lock"><LockKeyhole size={15} /></span><h3>{title}</h3><p>{description}</p><span className="coming-soon">EXPERIMENT BRIEFING <ArrowUpRight size={14} /></span></article>)}</div>
-    <div className="safety-note"><Shield size={17} /><p><strong>YOUR PRIVACY COMES FIRST.</strong> Cyber Lab activities use fictional scenarios only. We never ask for or store real passwords, personal secrets, or account details.</p></div>
+type MythBoard = { key: string; mode: string; participation: string; challengeId: string | null; version: number | null; configId: number };
+type MythBoardEntry = { id: string; rank: number; challenger: string; score: number; accuracy: number; correct: number; incorrect: number; longestStreak: number; averageMs: number; completedAt: number; mode: string; participation: string; boardKey: string; challengeVersion: number | null; configId: number };
+type MythBoards = { boards: MythBoard[]; entries: MythBoardEntry[]; visible: boolean; updatedAt: string };
+
+function MythFactLeaderboard() {
+  const { data, error, live } = useLiveData<MythBoards>("/api/myth/leaderboard");
+  const [board, setBoard] = useState("");
+  const boards = data?.boards ?? [];
+  const current = boards.some((item) => item.key === board) ? board : boards[0]?.key ?? "";
+  const rows = (data?.entries ?? []).filter((entry) => entry.boardKey === current);
+  return <div id="game-rankings" role="tabpanel" aria-labelledby="tab-myth-fact" aria-busy={!data && !error}>
+    {error && <div className="ranking-error" role="status">Connection interrupted. {data ? "Showing the last received rankings." : "Reconnecting to the arena…"}</div>}
+    {!data ? <div className="leaderboard-empty"><Trophy size={28} /><strong>{error ? "RANKINGS UNAVAILABLE" : "LOADING RANKINGS…"}</strong><p>Connecting to the Digital Truth boards.</p><span>EVERY MODE HAS ITS OWN ARENA</span></div>
+      : !data.visible ? <div className="leaderboard-empty"><Trophy size={28} /><strong>LEADERBOARDS ARE HIDDEN</strong><p>Staff have temporarily hidden public rankings for this game.</p><span>ASK AN EVENT VOLUNTEER FOR RESULTS</span></div>
+      : !boards.length ? <div className="leaderboard-empty"><Trophy size={28} /><strong>NO COMPLETED RUNS YET</strong><p>Be the first to finish a Myth or Fact run.</p><span>THE NEXT RECORD COULD BE YOURS</span></div>
+      : <>
+        <div className="myth-board-tabs" role="group" aria-label="Myth or Fact leaderboards">{boards.map((item) => <button key={item.key} className={item.key === current ? "myth-chip myth-chip-on" : "myth-chip"} aria-pressed={item.key === current} onClick={() => setBoard(item.key)}>{item.mode.toUpperCase()} · {item.participation.toUpperCase()}{item.version ? ` · EVENT v${item.version}` : ` · RULES #${item.configId}`}</button>)}</div>
+        <div className="myth-admin-table-wrap"><table className="myth-admin-table myth-board-table">
+          <thead><tr><th>RANK</th><th>CHALLENGER</th><th>SCORE</th><th>ACCURACY</th><th>STREAK</th><th>DATE</th></tr></thead>
+          <tbody>{rows.map((entry) => <tr key={entry.id} className={entry.rank <= 3 ? "podium-row" : ""}><td className="rank-number">{entry.rank <= 3 && <Trophy size={13} />} {String(entry.rank).padStart(2, "0")}</td><td><strong>{entry.challenger}</strong></td><td>{entry.score.toLocaleString()}</td><td>{entry.accuracy}%</td><td>{entry.longestStreak}</td><td><time dateTime={new Date(entry.completedAt).toISOString()} title={new Date(entry.completedAt).toLocaleString()}>{new Date(entry.completedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</time></td></tr>)}</tbody>
+        </table></div>
+        <div className="leaderboard-foot"><span>{rows.length} SHOWN · BEST RUN PER PARTICIPANT OR TEAM FOR THESE RULES</span><span>{live ? "UPDATED IN REAL TIME" : "AUTO REFRESH · 15 SEC"} <i className={`status-dot ${live ? "" : "muted-dot"}`} /></span></div>
+      </>}
   </div>;
 }
 
@@ -321,7 +355,7 @@ function AdminPage({ admin, onLogout }: { admin: AdminUser | null; onLogout: () 
 function ConnectedAdminPage({ admin, onLogout }: { admin: AdminUser; onLogout: () => void }) {
   const { data, error, live } = useLiveData<Overview>("/api/admin/overview");
   const count = (value: number | undefined) => value === undefined ? error ? "UNAVAILABLE" : "…" : value.toLocaleString();
-  return <div className="page-content interior-page"><div className="admin-welcome"><PageHeading label={`SIGNED IN AS ${admin.username.toUpperCase()} · ${admin.role.replace("_", " ").toUpperCase()}`} title={<>MISSION <span>CONTROL.</span></>} description="Live event activity, persistent scores, and database connectivity." /><button className="outline-button" onClick={onLogout}>SIGN OUT</button></div><div className="admin-stats"><StatCard label="PARTICIPANTS" value={count(data?.participants)} icon={Award} /><StatCard label="GAMES PLAYED" value={count(data?.gamesPlayed)} icon={Gamepad2} /><StatCard label="ACTIVE SESSIONS" value={count(data?.activeSessions)} icon={Sparkles} /><StatCard label="DATABASE" value={error ? "DISCONNECTED" : data?.database === "connected" ? "CONNECTED" : "CHECKING…"} icon={Shield} /></div><div className="admin-notice" role="status"><CircleHelp size={18} /><div><strong>{error ? "CONNECTION INTERRUPTED · RETRYING" : live ? "LIVE EVENT MONITORING" : "AUTOMATIC REFRESH ACTIVE"}</strong><p>{error ? "The database could not be reached. Any displayed counts are from the last successful update." : "Participants are unique browser profiles that started a game. Games played counts completed runs. Active sessions are unfinished runs seen within the last 90 seconds."}{data && <> Last successful update: {new Date(data.updatedAt).toLocaleTimeString()}.</>}</p></div></div></div>;
+  return <div className="page-content interior-page"><div className="admin-welcome"><PageHeading label={`SIGNED IN AS ${admin.username.toUpperCase()} · ${admin.role.replace("_", " ").toUpperCase()}`} title={<>MISSION <span>CONTROL.</span></>} description="Live event activity, persistent scores, database connectivity, and Myth or Fact content." /><button className="outline-button" onClick={onLogout}>SIGN OUT</button></div><div className="admin-stats"><StatCard label="PARTICIPANTS" value={count(data?.participants)} icon={Award} /><StatCard label="GAMES PLAYED" value={count(data?.gamesPlayed)} icon={Gamepad2} /><StatCard label="ACTIVE SESSIONS" value={count(data?.activeSessions)} icon={Sparkles} /><StatCard label="DATABASE" value={error ? "DISCONNECTED" : data?.database === "connected" ? "CONNECTED" : "CHECKING…"} icon={Shield} /></div><div className="admin-notice" role="status"><CircleHelp size={18} /><div><strong>{error ? "CONNECTION INTERRUPTED · RETRYING" : live ? "LIVE EVENT MONITORING" : "AUTOMATIC REFRESH ACTIVE"}</strong><p>{error ? "The database could not be reached. Any displayed counts are from the last successful update." : "Participants are unique browser profiles that started a game. Games played counts completed runs. Active sessions are unfinished runs seen within the last 90 seconds."}{data && <> Last successful update: {new Date(data.updatedAt).toLocaleTimeString()}.</>}</p></div></div><MythFactAdmin role={admin.role} /></div>;
 }
 
 function StatCard({ label, value, icon: Icon }: { label: string; value: string; icon: typeof Award }) {

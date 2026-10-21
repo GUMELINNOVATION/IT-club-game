@@ -1,5 +1,40 @@
 import type { Question, QuizCategory } from "./questions";
 
+export type QuizTopic = QuizCategory | "random";
+
+export function createTopicQuiz(questionBank: Question[], topic: QuizTopic, count: number, random: () => number = Math.random): Question[] {
+  if (topic !== "random") return createQuiz(questionBank, [topic], count, random);
+  const categories = [...new Set(questionBank.map((question) => question.category))];
+  const shuffled = createQuiz(questionBank, categories, questionBank.length, random);
+  // Distribute the mixed run across topics rather than letting the largest pool dominate.
+  const buckets = new Map<QuizCategory, Question[]>();
+  for (const question of shuffled) {
+    const bucket = buckets.get(question.category) ?? [];
+    bucket.push(question);
+    buckets.set(question.category, bucket);
+  }
+  const mixed: Question[] = [];
+  while (mixed.length < shuffled.length) {
+    for (const bucket of buckets.values()) {
+      const question = bucket.pop();
+      if (question) mixed.push(question);
+    }
+  }
+  if (!Number.isInteger(count) || count < 1) throw new RangeError("Question count must be a positive integer.");
+  return mixed.slice(0, count);
+}
+
+export function shuffleAnswers(question: Question, random: () => number = Math.random): Question {
+  const choices = question.options.map((option, index) => ({ option, correct: index === question.answerIndex }));
+  for (let index = choices.length - 1; index > 0; index--) {
+    const sample = random();
+    if (!Number.isFinite(sample) || sample < 0 || sample >= 1) throw new RangeError("Invalid random source.");
+    const swapIndex = Math.floor(sample * (index + 1));
+    [choices[index], choices[swapIndex]] = [choices[swapIndex], choices[index]];
+  }
+  return { ...question, options: choices.map(({ option }) => option) as Question["options"], answerIndex: choices.findIndex(({ correct }) => correct) };
+}
+
 export type QuizAnswer = {
   questionId: string;
   selectedIndex: number | null;

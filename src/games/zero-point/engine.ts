@@ -18,7 +18,17 @@ export type ZeroPointRoundResult = {
 export const ZERO_POINT_ROUNDS = 8;
 export const TIME_MASTER_RANGE = { minMs: 8_000, maxMs: 14_000 };
 export const EVENT_HORIZON_RANGE = { minMs: 18_000, maxMs: 25_000 };
-export const ZERO_POINT_RULESET = "zero-point-v2";
+export const ZERO_POINT_TARGET_RANGES = [
+  { minMs: 3_500, maxMs: 6_500 },
+  { minMs: 6_000, maxMs: 9_000 },
+  { minMs: 8_000, maxMs: 12_000 },
+  { minMs: 10_000, maxMs: 14_000 },
+  TIME_MASTER_RANGE,
+  { minMs: 13_000, maxMs: 17_000 },
+  { minMs: 16_000, maxMs: 20_000 },
+  EVENT_HORIZON_RANGE
+] as const;
+export const ZERO_POINT_RULESET = "zero-point-v3";
 
 export function createRoundTargets(random: () => number = Math.random): ZeroPointRound[] {
   const sample = () => {
@@ -30,28 +40,24 @@ export function createRoundTargets(random: () => number = Math.random): ZeroPoin
   };
   const chooseTarget = (range: { minMs: number; maxMs: number }) =>
     range.minMs + Math.floor(sample() * (range.maxMs - range.minMs + 1));
-  const flickerWindows = (targetMs: number, fraction: number): Array<[number, number]> => [
-    [0, 700],
-    [Math.round(targetMs * 0.17), Math.round(targetMs * 0.22)],
-    [Math.round(targetMs * 0.39), Math.round(targetMs * 0.44)],
-    [Math.round(targetMs * 0.62), Math.round(targetMs * 0.67)],
-    [Math.round(targetMs * 0.81), Math.round(targetMs * 0.86)],
-    [Math.round(targetMs * fraction), Math.round(targetMs * fraction + 450)],
-    [Math.max(0, targetMs - 650), Math.max(0, targetMs - 150)]
-  ];
-  const timeMasterTarget = chooseTarget(TIME_MASTER_RANGE);
-  const eventHorizonTarget = chooseTarget(EVENT_HORIZON_RANGE);
-
-  return [
-    { level: 1, name: "Rookie", targetMs: 5_000, timerWindows: null, distraction: false },
-    { level: 2, name: "Focus", targetMs: 7_500, timerWindows: [[0, 2_500], [4_000, 4_700], [6_750, 7_350]], distraction: false },
-    { level: 3, name: "Blind Timing", targetMs: 10_000, timerWindows: [[0, 1_200], [2_400, 3_000], [4_200, 4_800], [7_000, 7_600], [9_200, 9_700]], distraction: false },
-    { level: 4, name: "Chaos", targetMs: 12_345, timerWindows: [[0, 700], [1_800, 2_450], [4_400, 5_000], [7_400, 8_000], [10_700, 11_300], [12_050, 12_300]], distraction: true },
-    { level: 5, name: "Time Master", targetMs: timeMasterTarget, timerWindows: flickerWindows(timeMasterTarget, 0.53), distraction: false },
-    { level: 6, name: "Overdrive", targetMs: 15_250, timerWindows: flickerWindows(15_250, 0.48), distraction: true },
-    { level: 7, name: "Singularity", targetMs: 18_000, timerWindows: flickerWindows(18_000, 0.57), distraction: true },
-    { level: 8, name: "Event Horizon", targetMs: eventHorizonTarget, timerWindows: flickerWindows(eventHorizonTarget, 0.51), distraction: true }
-  ];
+  const names = ["Rookie", "Focus", "Blind Timing", "Chaos", "Time Master", "Overdrive", "Singularity", "Event Horizon"];
+  return ZERO_POINT_TARGET_RANGES.map((range, index) => {
+    const targetMs = chooseTarget(range);
+    let timerWindows: Array<[number, number]> | null = null;
+    if (index > 0) {
+      const initialEnd = Math.round((index === 1 ? 1_400 : 600) + sample() * 400);
+      timerWindows = [[0, initialEnd]];
+      for (const fraction of [0.28, 0.47, 0.66, 0.82]) {
+        const start = Math.round(targetMs * (fraction + (sample() - 0.5) * 0.06));
+        const duration = Math.round(300 + sample() * 250);
+        timerWindows.push([start, start + duration]);
+      }
+      // Always offer one final calibration glimpse, with randomized timing.
+      const finalEnd = targetMs - Math.round(100 + sample() * 100);
+      timerWindows.push([finalEnd - Math.round(300 + sample() * 150), finalEnd]);
+    }
+    return { level: index + 1, name: names[index], targetMs, timerWindows, distraction: index === 3 || index >= 5 };
+  });
 }
 
 export function calculateErrorMs(actualElapsedMs: number, targetMs: number): number {

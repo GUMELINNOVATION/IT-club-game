@@ -1,4 +1,6 @@
-export type QuizCategory = "Security" | "Privacy" | "AI & Data" | "Digital Basics" | "Tech Myths" | "Logic";
+import { practicalQuestions } from "./practical-questions";
+
+export type QuizCategory = "Frontend" | "Backend" | "General Knowledge" | "Security" | "Privacy" | "AI & Data" | "Digital Basics" | "Tech Myths" | "Logic";
 export type QuestionDifficulty = "Easy" | "Medium" | "Hard";
 
 export type Question = {
@@ -14,9 +16,12 @@ export type Question = {
   source: string;
 };
 
-type QuestionDraft = Omit<Question, "id" | "timeLimitSeconds" | "status" | "source">;
+export type QuestionDraft = Omit<Question, "id" | "timeLimitSeconds" | "status" | "source">;
 
 const sources: Record<QuizCategory, string> = {
+  Frontend: "MDN Web Docs: HTML, CSS, JavaScript, and accessibility (developer.mozilla.org); React documentation (react.dev)",
+  Backend: "MDN Web Docs: HTTP and server-side development (developer.mozilla.org); OWASP Cheat Sheet Series (cheatsheetseries.owasp.org)",
+  "General Knowledge": "EMU IT Club: original general knowledge and everyday reasoning questions",
   Security: "CISA: Secure Our World (cisa.gov/secure-our-world)",
   Privacy: "FTC: Privacy and Security (consumer.ftc.gov)",
   "AI & Data": "NIST: AI Risk Management Framework (nist.gov/itl/ai-risk-management-framework)",
@@ -191,7 +196,7 @@ const additionalDrafts: QuestionDraft[] = [
   { category: "Logic", difficulty: "Medium", question: "A pattern repeats red, green, green. What is the 4th color?", options: ["Red", "Green", "Blue", "Yellow"], answerIndex: 0, explanation: "After the three-color cycle red, green, green, the pattern starts again with red." }
 ];
 
-const drafts = [...initialDrafts, ...additionalDrafts];
+const drafts = [...initialDrafts, ...additionalDrafts, ...practicalQuestions];
 
 export const QUESTION_BANK: Question[] = drafts.map((draft, index) => ({
   ...draft,
@@ -201,4 +206,4 @@ export const QUESTION_BANK: Question[] = drafts.map((draft, index) => ({
   source: sources[draft.category]
 }));
 
-export const QUIZ_CATEGORIES: QuizCategory[] = ["Security", "Privacy", "AI & Data", "Digital Basics", "Tech Myths", "Logic"];
+export const QUIZ_CATEGORIES: QuizCategory[] = ["Frontend", "Backend", "Security", "AI & Data", "General Knowledge", "Digital Basics", "Privacy", "Tech Myths", "Logic"];

@@ -38,5 +38,21 @@
     "typescript": "^5.9.3",
     "vite": "^7.1.10",
     "vitest": "^5.0.5"
-  }
+  },
+  "description": "The EMUCON IT Challenge Arena is an event-focused arcade and cybersecurity-awareness platform for EMUCON 2026, reflecting the EMU Information Technologies Club and Eastern Mediterranean University branding. Zero Point, Target Rush, Perfect Align, Brain Firewall, Neon Snake, and Myth or Fact are playable, with persistent SQLite scores, live game rankings, and staff activity metrics.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GUMELINNOVATION/IT-club-game.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/GUMELINNOVATION/IT-club-game/issues"
+  },
+  "homepage": "https://github.com/GUMELINNOVATION/IT-club-game#readme"
 }

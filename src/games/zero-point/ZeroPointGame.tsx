@@ -16,7 +16,7 @@ type Props = {
   onBack: () => void;
 };
 
-function makeTimeMasterRandom(): number {
+function randomRoundValue(): number {
   const values = new Uint32Array(1);
   globalThis.crypto.getRandomValues(values);
   return values[0] / 0x1_0000_0000;
@@ -92,7 +92,7 @@ export default function ZeroPointGame({ onBack }: Props) {
   };
 
   const startChallenge = () => {
-    const configuredRounds = createRoundTargets(makeTimeMasterRandom);
+    const configuredRounds = createRoundTargets(randomRoundValue);
     setRounds(configuredRounds);
     setResults([]);
     beginRound(0);
@@ -151,10 +151,10 @@ export default function ZeroPointGame({ onBack }: Props) {
           <div className="zero-intro-copy">
             <span className="eyebrow"><span className="eyebrow-line" /> CHALLENGE 01 · PRECISION</span>
             <h1>ZERO <span>POINT.</span></h1>
-            <p>Eight levels. A target time. Your timing. Stop the clock as close to the target as you can.</p>
+            <p>Eight levels. New random target times on every run. Stop the clock as close to each target as you can.</p>
             <div className="zero-rule-list">
               <div><Timer size={16} /><span><strong>REAL TIMING</strong><small>Measured with your device's high-resolution monotonic clock.</small></span></div>
-              <div><Clock3 size={16} /><span><strong>EIGHT LEVELS</strong><small>Targets get longer. The clock flickers off and on for brief glimpses.</small></span></div>
+              <div><Clock3 size={16} /><span><strong>EIGHT RANDOMIZED LEVELS</strong><small>Every target is random to the millisecond. Advanced clock glimpses change on each run.</small></span></div>
               <div><Trophy size={16} /><span><strong>PRECISION SCORE</strong><small>Each round uses the same published, deterministic formula.</small></span></div>
             </div>
             <details open className="game-user-guide">
@@ -162,8 +162,8 @@ export default function ZeroPointGame({ onBack }: Props) {
               <ol>
                 <li>Read the target time before the three-second countdown starts.</li>
                 <li>Tap STOP, press Space, or press Enter when you think the target time has elapsed.</li>
-                <li>On advanced levels the clock briefly disappears, then returns at the published time windows. Use each glimpse to recalibrate.</li>
-                <li>Review your timing error and score after every level. There are eight levels; the last target is randomized.</li>
+                <li>On advanced levels the clock briefly disappears, then returns at randomized time windows. Use each glimpse to recalibrate.</li>
+                <li>Review your timing error and score after every level. All eight target numbers are randomly generated for each new run.</li>
               </ol>
               <p>Scoring: <code>round(10,000 ÷ (1 + error ms ÷ 25))</code>. Completed runs are saved to the Hall of Fame.</p>
             </details>

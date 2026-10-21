@@ -1,4 +1,16 @@
 /* Readable event-screen typography, applied after the original arena styles. */
+.quiz-topic-picker { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 18px 0 22px; }
+.quiz-topic-option { position: relative; display: flex; align-items: flex-start; gap: 10px; padding: 15px 12px; border: 1px solid var(--line); border-radius: 6px; background: #101626; cursor: pointer; flex-wrap: wrap; }
+.quiz-topic-option:hover { border-color: #82e5ae70; }
+.quiz-topic-option:focus-within { outline: 2px solid var(--green); outline-offset: 3px; }
+.quiz-topic-option.topic-selected { border-color: var(--green); background: #82e5ae0c; }
+.quiz-topic-option input { accent-color: var(--green); margin-top: 5px; }
+.quiz-topic-number { color: var(--green); font: 12px/1.8 "DM Mono", monospace; }
+.quiz-topic-copy { display: grid; gap: 5px; flex: 1; min-width: 130px; }
+.quiz-topic-copy strong { color: #e2e9f3; font-size: 14px; font-weight: 600; }
+.quiz-topic-copy small { color: #a2aec4; font-size: 12px; line-height: 1.6; }
+.quiz-topic-count { width: 100%; padding-left: 44px; color: #9ac4ae; font: 10px/1.6 "DM Mono", monospace; }
+@media(max-width:540px) { .quiz-topic-picker { grid-template-columns: 1fr; } }
 :root {
   --text-caption: .6875rem;
   --text-label: .75rem;

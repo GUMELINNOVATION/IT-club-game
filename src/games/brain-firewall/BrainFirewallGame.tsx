@@ -1,24 +1,28 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, CircleHelp, RotateCcw, ShieldAlert, Timer, Trophy, X } from "lucide-react";
 import { ChallengerName, ScoreStatus, useGameSession } from "../../ui/arena-data";
-import { createQuiz, scoreAnswer, type QuizAnswer } from "./engine";
-import { QUESTION_BANK, QUIZ_CATEGORIES, type Question, type QuizCategory } from "./questions";
+import { createTopicQuiz, scoreAnswer, shuffleAnswers, type QuizAnswer, type QuizTopic } from "./engine";
+import { QUESTION_BANK, QUIZ_CATEGORIES, type Question } from "./questions";
 
 type Phase = "intro" | "playing" | "feedback" | "complete";
 type Props = { onBack: () => void };
 
-function shuffleAnswers(question: Question, random: () => number = Math.random): Question {
-  const choices = question.options.map((option, index) => ({ option, correct: index === question.answerIndex }));
-  for (let index = choices.length - 1; index > 0; index--) {
-    const swapIndex = Math.floor(random() * (index + 1));
-    [choices[index], choices[swapIndex]] = [choices[swapIndex], choices[index]];
-  }
-  return { ...question, options: choices.map(({ option }) => option) as Question["options"], answerIndex: choices.findIndex(({ correct }) => correct) };
-}
+const topicOptions: { id: QuizTopic; label: string; description: string }[] = [
+  { id: "random", label: "Random Mix", description: "A balanced surprise selection from every topic." },
+  { id: "Frontend", label: "Frontend", description: "HTML, CSS, JavaScript, React, and accessibility." },
+  { id: "Backend", label: "Backend", description: "APIs, databases, servers, and real-world debugging." },
+  { id: "Security", label: "Security", description: "Phishing, passwords, authentication, and safer decisions." },
+  { id: "AI & Data", label: "AI & Data", description: "AI literacy, data quality, and responsible use." },
+  { id: "General Knowledge", label: "General Knowledge", description: "Everyday scenarios, science, numbers, and critical thinking." },
+  { id: "Digital Basics", label: "General Technology", description: "Devices, networks, browsers, and the internet." },
+  { id: "Privacy", label: "Privacy", description: "Personal information, sharing, and digital footprints." },
+  { id: "Tech Myths", label: "Tech Myths", description: "Separate common technology claims from facts." },
+  { id: "Logic", label: "Logic", description: "Patterns, reasoning, and practical problem-solving." }
+];
 
 export default function BrainFirewallGame({ onBack }: Props) {
   const [phase, setPhase] = useState<Phase>("intro");
-  const [selectedCategories, setSelectedCategories] = useState<QuizCategory[]>([...QUIZ_CATEGORIES]);
+  const [selectedTopic, setSelectedTopic] = useState<QuizTopic>("random");
   const [questionCount, setQuestionCount] = useState(10);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -81,7 +85,7 @@ export default function BrainFirewallGame({ onBack }: Props) {
 
   const startQuiz = () => {
     try {
-      const selected = createQuiz(QUESTION_BANK, selectedCategories, questionCount).map((question) => shuffleAnswers(question));
+      const selected = createTopicQuiz(QUESTION_BANK, selectedTopic, questionCount).map((question) => shuffleAnswers(question));
       setQuestions(selected);
       setAnswers([]);
       setScore(0);
@@ -106,12 +110,6 @@ export default function BrainFirewallGame({ onBack }: Props) {
     }
   };
 
-  const toggleCategory = (category: QuizCategory) => {
-    setSelectedCategories((previous) => previous.includes(category)
-      ? previous.filter((item) => item !== category)
-      : [...previous, category]);
-  };
-
   return (
     <div className="page-content interior-page brain-firewall-page">
       <button className="back-link" onClick={onBack}><ArrowLeft size={15} /> BACK TO CHALLENGES</button>
@@ -120,25 +118,26 @@ export default function BrainFirewallGame({ onBack }: Props) {
         <section className="firewall-intro">
           <div className="eyebrow"><span className="eyebrow-line" /> CHALLENGE 04 · KNOWLEDGE</div>
           <h1>BRAIN <span>FIREWALL.</span></h1>
-          <p>Challenge what you know about technology, privacy, security, AI, and the digital world. Learn from every answer.</p>
+          <p>Choose your field: frontend, backend, security, general knowledge, and more. Solve realistic scenarios or try Random Mix for a little of everything.</p>
           <details open className="game-user-guide firewall-guide">
             <summary>QUICK PLAYER GUIDE · READ BEFORE STARTING</summary>
             <ol>
-              <li>Choose one or more topics and a 10- or 20-question run.</li>
+              <li>Choose Random Mix or a specific category, then a 10- or 20-question run.</li>
               <li>Select an answer before the question timer expires. Keys 1–4 also work.</li>
               <li>Correct answers earn points for difficulty, speed, and your current streak.</li>
-              <li>Read the explanation and source after each question; timeout counts as unanswered.</li>
+              <li>Questions and answer positions are shuffled each run. No question repeats within the same run.</li>
+              <li>Read the explanation and reference after each question; timeout counts as unanswered.</li>
             </ol>
             <p>Questions are for awareness and learning, not professional security advice. Do not enter real personal information in this game.</p>
           </details>
           <div className="firewall-setup">
-            <div className="firewall-setup-title"><span>SELECT TOPICS</span><small>{QUESTION_BANK.length} REVIEWED QUESTIONS · {QUIZ_CATEGORIES.length} TOPICS</small></div>
-            <div className="category-picker">{QUIZ_CATEGORIES.map((category) => <label key={category} className={selectedCategories.includes(category) ? "category-selected" : ""}><input type="checkbox" checked={selectedCategories.includes(category)} onChange={() => toggleCategory(category)} /><span>{category}</span></label>)}</div>
+            <div className="firewall-setup-title"><span id="quiz-topic-label">CHOOSE YOUR CATEGORY</span><small>{QUESTION_BANK.length} QUESTIONS · {QUIZ_CATEGORIES.length} TOPICS</small></div>
+            <div className="quiz-topic-picker" role="radiogroup" aria-labelledby="quiz-topic-label">{topicOptions.map((topic, index) => <label key={topic.id} className={`quiz-topic-option ${selectedTopic === topic.id ? "topic-selected" : ""}`}><input type="radio" name="quiz-topic" checked={selectedTopic === topic.id} onChange={() => setSelectedTopic(topic.id)} /><span className="quiz-topic-number">{String(index + 1).padStart(2, "0")}</span><span className="quiz-topic-copy"><strong>{topic.label}</strong><small>{topic.description}</small></span><span className="quiz-topic-count">{topic.id === "random" ? "ALL TOPICS" : `${QUESTION_BANK.filter((question) => question.category === topic.id).length} QUESTIONS`}</span></label>)}</div>
             <div className="question-count-picker"><span>RUN LENGTH</span><button className={questionCount === 10 ? "count-selected" : ""} onClick={() => setQuestionCount(10)}>10 QUESTIONS</button><button className={questionCount === 20 ? "count-selected" : ""} onClick={() => setQuestionCount(20)}>20 QUESTIONS</button></div>
           </div>
           {errorMessage && <p className="firewall-error" role="alert">{errorMessage}</p>}
           <ChallengerName value={tracking.challenger} onChange={tracking.setChallenger} />
-          <button className="primary-button" onClick={startQuiz}>START QUIZ <ArrowRight size={16} /></button>
+          <button className="primary-button" onClick={startQuiz}>START {topicOptions.find((topic) => topic.id === selectedTopic)?.label.toUpperCase()} <ArrowRight size={16} /></button>
           <p className="local-score-note">Completed scores appear in the live Hall of Fame.</p>
         </section>
       )}

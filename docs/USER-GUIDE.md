@@ -1,6 +1,6 @@
 # EMUCON IT Challenge Arena — Player Guide
 
-Welcome to the EMUCON IT Challenge Arena. Pick a challenge, read its quick guide before you start, and play at your own pace. You do not need to create an account or provide contact information.
+Welcome to the EMUCON IT Challenge Arena. Pick one of six challenges, read its quick guide before you start, and play at your own pace. You do not need to create an account or provide contact information.
 
 ## Before you play
 
@@ -8,7 +8,7 @@ Welcome to the EMUCON IT Challenge Arena. Pick a challenge, read its quick guide
 - Use a mouse, touch screen, or the keyboard controls shown in the game.
 - Sound is muted by default. Follow the on-screen instructions; you can play without sound.
 - A game may offer a **Back to Challenges** button. Leaving a live round ends that local run.
-- Completed scores are submitted to the live Hall of Fame. Scores are calculated in the browser and are not replayed or independently verified, so they should not be used to award prizes without additional event controls.
+- Completed scores are submitted to the live Hall of Fame. Myth or Fact answers and scores are validated by the server. The other five games calculate scores in the browser; those scores are not replayed or independently verified, so they should not be used to award prizes without additional event controls.
 
 ## Zero Point
 
@@ -20,7 +20,7 @@ Zero Point has eight increasingly difficult levels. The target time is shown bef
 4. Review your actual time, error, and points before continuing.
 5. Complete all eight levels to see your summary.
 
-Levels 2–8 periodically hide and reveal the elapsed timer. The clock returns for brief glimpses—including near the target—rather than remaining hidden for the rest of the round. The final level picks a random target from 18 to 25 seconds.
+All eight levels generate fresh millisecond-precision target numbers on every run: Rookie 3.5–6.5s, Focus 6–9s, Blind Timing 8–12s, Chaos 10–14s, Time Master 8–14s, Overdrive 13–17s, Singularity 16–20s, and Event Horizon 18–25s. Read each target rather than memorizing a fixed number. Levels 2–8 hide and reveal the elapsed timer at newly randomized windows, always including a final glimpse near the target. Rookie keeps its timer visible.
 
 Scoring is deterministic:
 
@@ -56,15 +56,15 @@ The run summary lists every attempt. Completed scores are submitted to the Hall 
 
 ## Brain Firewall
 
-Brain Firewall offers six topics: Security, Privacy, AI & Data, Digital Basics, Tech Myths, and Logic. Choose any combination and a 10- or 20-question run.
+Brain Firewall offers numbered category options: **1. Random Mix**, **2. Frontend**, **3. Backend**, **4. Security**, **5. AI & Data**, **6. General Knowledge**, **7. General Technology**, **8. Privacy**, **9. Tech Myths**, and **10. Logic**. Choose one option and a 10- or 20-question run. Random Mix balances questions across the nine topics. Every individual category supports 20 distinct questions.
 
-1. Select the topics and run length before starting.
+1. Select Random Mix or a specific category, then choose the run length before starting. Frontend and Backend include realistic development scenarios; General Knowledge includes science, everyday calculations, and critical thinking.
 2. Choose one of four answers before the question timer runs out; number keys **1–4** are also available.
 3. Correct answers earn points based on difficulty and response speed, with an additional streak bonus. Incorrect answers and timeouts earn no points.
 4. Read the explanation and source shown after each question, then continue to the next one.
 5. Review the final score, accuracy, streak, and answer explanations at the end.
 
-The local question bank contains 150 reviewed questions with topic, difficulty, timer, explanation, and source metadata. This is a learning game, not professional security advice; do not enter real personal information.
+The local question bank contains 210 questions with topic, difficulty, timer, explanation, and reference metadata. Questions and answer positions are shuffled for each run, with no repeated question within that run. This is a learning game, not professional security advice; do not enter real personal information.
 
 ## Neon Snake
 
@@ -82,7 +82,34 @@ Completed Neon Snake scores are submitted to the live Hall of Fame. Keyboard con
 
 ## Cyber Lab and privacy
 
-Cyber Lab uses fictional examples for awareness activities. Never enter a real password, account recovery answer, or other secret into a demonstration. The platform does not need your email, telephone number, student ID, or account registration to play.
+Cyber Lab has five short, interactive experiments: Social Engineering Detective, QR Code Trust Test, Spot the Phishing Attempt, Public Wi-Fi Awareness, and Digital Footprint Challenge.
+
+1. Open **Cyber Lab** and choose **Start Experiment** on any activity.
+2. Read the fictional scenario and select the safest answer.
+3. Review the explanation, then continue through all three scenarios.
+4. The completion screen shows how many safety cues you identified. You can retry or choose another experiment.
+
+These simulations do not scan QR codes, open websites, connect to Wi-Fi, or collect answers for a leaderboard. They never ask for real passwords, account codes, student IDs, or personal secrets. Use official organization channels to verify unexpected messages and requests.
+
+## Myth or Fact
+
+Myth or Fact tests whether a statement is a fact or a myth. It has 200 reviewed statements in seven categories: Everyday Technology, Cybersecurity, Online Privacy, Artificial Intelligence, Smartphones & Internet, Social Media, and Digital Forensics & IT.
+
+1. Read the quick guide, then choose a mode: **Classic**, **Speed**, **Survival**, **Confidence**, **Team Discussion**, or **Event**.
+2. Pick a difficulty and, for casual modes, the categories you want. Solo runs need at least 10 available statements. Team Discussion uses 2–6 players on one device; enter a team name, captain, and member display names.
+3. Wait through the three-second countdown. Read each statement and choose **Fact** or **Myth** before the timer expires; number keys **1** and **2** also work. In Confidence Battle, press **1**, **2**, or **3** to stake low, medium, or high confidence after choosing an answer.
+4. After the reveal, read the correct answer, explanation, and source, then continue. Each run shows accuracy, score, rank, and a full review at the end.
+5. Score bonuses come from speed, streaks, the Double Trouble pair, the final challenge, and mode rules. The optional hint removes bonuses for that statement, so use it only when needed. A timed-out answer scores zero.
+
+Mode notes:
+
+- **Classic** is a 15-question mixed run. **Speed** shortens each question timer and flashes the result. **Survival** ends after three wrong answers or timeouts.
+- **Confidence** lets you stake 1, 2, or 3 levels of confidence. A correct confident answer scores more; a wrong confident answer loses points. Staking is available only in this mode.
+- **Team Discussion** is for a single shared device. The team score and answer review belong to the whole team.
+
+Casual runs leave out every statement assigned to your previous three sessions, including sessions you left early, so a retry shows fresh material. There is no cooldown for a fixed event set.
+
+**Event players:** enter the code supplied by event staff. Codes are single-use and tied to one fixed set of statements. If the event withholds explanations until registration closes, finish your run first and review the answers after staff close registration. Ask a volunteer if a code is rejected or your run is interrupted.
 
 ## Staff access
 
@@ -90,4 +117,4 @@ The staff sign-in control is intentionally not displayed in the public participa
 
 ## Accessibility and fair play
 
-Use the keyboard controls or numbered target controls when available. Pointer/touch reflex times may differ from keyboard input, so browser-calculated scores are not independently verified competition rankings. Ask event volunteers for an accessible alternative if a reaction-based challenge is not suitable.
+Use the keyboard controls or numbered target controls when available; Myth or Fact accepts **1** and **2** for answers. Pointer/touch reflex times may differ from keyboard input, so browser-calculated scores are not independently verified competition rankings. Myth or Fact is server-scored, but device speed and connection quality can still affect Speed mode and speed bonuses. Ask event volunteers for an accessible alternative if a reaction-based challenge is not suitable.

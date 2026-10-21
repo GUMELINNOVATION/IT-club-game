@@ -121,7 +121,7 @@ describe("connected arena API", () => {
       .toMatchObject({ participants: 2, gamesPlayed: 3, activeSessions: 0 });
   });
 
-  it("separates all five boards and supports anonymous zero-point scores", async () => {
+  it("separates all six boards and supports anonymous zero-point scores", async () => {
     for (const game of ["target-rush", "perfect-align", "brain-firewall", "snake"]) {
       const id = await start(game, "");
       await api(`/api/play/${id}/complete`, "POST", { score: 0 });
@@ -129,8 +129,8 @@ describe("connected arena API", () => {
       expect(result.entries).toHaveLength(1);
       expect(result.entries[0]).toMatchObject({ rank: 1, challenger: "Anonymous Challenger", score: 0 });
     }
-    expect(Object.keys(await (await api("/api/leaderboards")).json())).toHaveLength(5);
-    expect(await (await api("/api/admin/overview", "GET", undefined, true)).json()).toMatchObject({ configuredGames: 5 });
+    expect(Object.keys(await (await api("/api/leaderboards")).json())).toHaveLength(6);
+    expect(await (await api("/api/admin/overview", "GET", undefined, true)).json()).toMatchObject({ configuredGames: 6 });
   });
 
   it("saves and ranks Snake runs, rejects invalid scores, and treats retries as one completed run", async () => {

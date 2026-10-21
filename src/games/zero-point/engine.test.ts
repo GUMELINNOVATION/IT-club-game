@@ -4,9 +4,8 @@ import {
   calculateRoundScore,
   createRoundResult,
   createRoundTargets,
-  EVENT_HORIZON_RANGE,
   isTimerVisible,
-  TIME_MASTER_RANGE,
+  ZERO_POINT_TARGET_RANGES,
   ZERO_POINT_ROUNDS
 } from "./engine";
 
@@ -21,11 +20,11 @@ describe("Zero Point scoring", () => {
 
   it("creates a result from the actual elapsed time", () => {
     const round = createRoundTargets(() => 0)[0];
-    expect(createRoundResult(round, 5_025)).toEqual({
+    expect(createRoundResult(round, round.targetMs + 25)).toEqual({
       level: 1,
       name: "Rookie",
-      targetMs: 5_000,
-      actualElapsedMs: 5_025,
+      targetMs: round.targetMs,
+      actualElapsedMs: round.targetMs + 25,
       errorMs: 25,
       score: 5_000
     });
@@ -40,39 +39,60 @@ describe("Zero Point scoring", () => {
 });
 
 describe("Zero Point round configuration", () => {
-  it("provides eight challenge levels and two bounded random targets", () => {
-    const rounds = createRoundTargets(() => 0.5);
-    expect(rounds).toHaveLength(ZERO_POINT_ROUNDS);
-    expect(rounds.map(({ targetMs }) => targetMs).slice(0, 4)).toEqual([5_000, 7_500, 10_000, 12_345]);
-    expect(rounds[4].targetMs).toBe(11_000);
-    expect(rounds[4].targetMs).toBeGreaterThanOrEqual(TIME_MASTER_RANGE.minMs);
-    expect(rounds[4].targetMs).toBeLessThanOrEqual(TIME_MASTER_RANGE.maxMs);
-    expect(rounds[5].targetMs).toBe(15_250);
-    expect(rounds[6].targetMs).toBe(18_000);
-    expect(rounds[7].targetMs).toBe(21_500);
-    expect(rounds[7].targetMs).toBeGreaterThanOrEqual(EVENT_HORIZON_RANGE.minMs);
-    expect(rounds[7].targetMs).toBeLessThanOrEqual(EVENT_HORIZON_RANGE.maxMs);
+  it("randomizes all eight targets within their level ranges, including both endpoints", () => {
+    for (const sample of [0, 0.123456, 0.5, 0.999999999]) {
+      const rounds = createRoundTargets(() => sample);
+      expect(rounds).toHaveLength(ZERO_POINT_ROUNDS);
+      rounds.forEach((round, index) => {
+        const range = ZERO_POINT_TARGET_RANGES[index];
+        expect(round.targetMs).toBe(range.minMs + Math.floor(sample * (range.maxMs - range.minMs + 1)));
+        expect(Number.isInteger(round.targetMs)).toBe(true);
+        expect(round.targetMs).toBeGreaterThanOrEqual(range.minMs);
+        expect(round.targetMs).toBeLessThanOrEqual(range.maxMs);
+      });
+    }
+    const low = createRoundTargets(() => 0.123456);
+    const high = createRoundTargets(() => 0.876543);
+    expect(low.every((round, index) => round.targetMs !== high[index].targetMs)).toBe(true);
+    expect(low.some((round) => round.targetMs % 1000 !== 0)).toBe(true);
   });
 
   it("reveals hidden-level clocks intermittently rather than leaving them permanently hidden", () => {
     const rounds = createRoundTargets(() => 0);
     expect(isTimerVisible(rounds[0], 10_000)).toBe(true);
-    expect(isTimerVisible(rounds[1], 2_000)).toBe(true);
-    expect(isTimerVisible(rounds[1], 3_000)).toBe(false);
-    expect(isTimerVisible(rounds[1], 4_200)).toBe(true);
-    expect(isTimerVisible(rounds[1], 5_000)).toBe(false);
-    expect(isTimerVisible(rounds[1], 7_000)).toBe(true);
-    expect(isTimerVisible(rounds[4], 0)).toBe(true);
-    expect(isTimerVisible(rounds[4], 1_000)).toBe(false);
-    expect(isTimerVisible(rounds[4], rounds[4].targetMs - 400)).toBe(true);
-    expect(isTimerVisible(rounds[7], 1_000)).toBe(false);
-    expect(isTimerVisible(rounds[7], rounds[7].targetMs - 400)).toBe(true);
-    expect(rounds.slice(1, 4).every((round) => round.timerWindows && round.timerWindows.length >= 3)).toBe(true);
-    expect(rounds.slice(4).every((round) => round.timerWindows && round.timerWindows.length >= 5)).toBe(true);
+    for (const round of rounds.slice(1)) {
+      expect(round.timerWindows).toHaveLength(6);
+      expect(isTimerVisible(round, 0)).toBe(true);
+      for (const [start, end] of round.timerWindows!) {
+        expect(start).toBeGreaterThanOrEqual(0);
+        expect(end).toBeGreaterThan(start);
+        expect(end).toBeLessThan(round.targetMs);
+        expect(isTimerVisible(round, start)).toBe(true);
+      }
+      expect(isTimerVisible(round, round.targetMs - 250)).toBe(true);
+      expect(isTimerVisible(round, round.targetMs)).toBe(false);
+      expect(isTimerVisible(round, round.targetMs * 0.59)).toBe(false);
+    }
     expect(() => isTimerVisible(rounds[0], -1)).toThrow(RangeError);
   });
 
+  it("randomizes clock windows independently from the target numbers", () => {
+    // Each non-rookie level consumes one target sample and eleven window samples.
+    let call = 0;
+    const custom = createRoundTargets(() => {
+      const current = call++;
+      return current === 0 || (current - 1) % 12 === 0 ? 0.5 : 0.8;
+    });
+    const baseline = createRoundTargets(() => 0.5);
+    custom.forEach((round, index) => {
+      expect(round.targetMs).toBe(baseline[index].targetMs);
+      if (index > 0) expect(round.timerWindows).not.toEqual(baseline[index].timerWindows);
+    });
+  });
+
   it("rejects an invalid random source", () => {
-    expect(() => createRoundTargets(() => 1)).toThrow(RangeError);
+    for (const invalid of [1, -0.1, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(() => createRoundTargets(() => invalid)).toThrow(RangeError);
+    }
   });
 });
