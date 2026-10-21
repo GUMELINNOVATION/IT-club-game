@@ -4,6 +4,7 @@ import { ChallengerName } from "../../ui/arena-data";
 import { api, clearDetectiveStorage, difficulties, duration, fields, identity, labels, type Attempt, type Catalog, type Evidence, type Progress } from "./api";
 import "./detective.css";
 import InvestigationGuide from "./InvestigationGuide";
+import { LocalizedContent } from "../../ui/i18n";
 
 export default function DigitalDetectiveGame({ onBack, onSessionChange }: { onBack: () => void; onSessionChange?: (hasAttempt: boolean) => void }) {
   const [catalog, setCatalog] = useState<Catalog | null>(null), [attempt, setAttempt] = useState<Attempt | null>(null), [progress, setProgress] = useState<Progress | null>(null);
@@ -55,7 +56,7 @@ export default function DigitalDetectiveGame({ onBack, onSessionChange }: { onBa
   const filtered = evidence.filter(e => (category === "All" || e.category === category) && (filter === "all" || (filter === "bookmarked" ? progress?.bookmarks : progress?.suspicious)?.includes(e.id)) && JSON.stringify(e).toLowerCase().includes(search.toLowerCase())).sort((a,b) => sort === "shuffled" ? 0 : (sort === "asc" ? 1 : -1) * a.timestamp.localeCompare(b.timestamp));
   const detail = evidence.find(e => e.id === selected), comparison = evidence.find(e => e.id === compare);
   const nodeOptions = [...(progress?.board ?? []).map(id => ({ id, label: evidence.find(e => e.id === id)?.title ?? id })), ...(progress?.hypotheses ?? []).map(h => ({ id: h.id, label: h.text }))];
-  return <div className="page-content dd-page">
+  return <LocalizedContent><div className="page-content dd-page">
     <div className="dd-heading"><button className="text-button" onClick={onBack}><ArrowLeft size={16} />{attempt ? "EXIT / NEXT VISITOR" : "ALL CHALLENGES"}</button><span className="eyebrow">SINGLE DEVICE · FICTIONAL EVIDENCE</span></div>
     <h1>DIGITAL <span>DETECTIVE.</span></h1>
     <InvestigationGuide active={attempt?.status === "active"} hintPenalty={attempt?.config.hintPenalty ?? catalog?.config.hintPenalty} />
@@ -72,7 +73,7 @@ export default function DigitalDetectiveGame({ onBack, onSessionChange }: { onBa
         {mode === "team" && <><label>Team name<input required maxLength={40} value={teamName} onChange={e => setTeamName(e.target.value)} /></label><label>Additional members</label>{members.map((m, i) => <div className="dd-member" key={i}><input required aria-label={`Member ${i + 2}`} maxLength={24} value={m} onChange={e => setMembers(members.map((x,j) => j === i ? e.target.value : x))} /><button type="button" aria-label={`Remove member ${i + 2}`} onClick={() => setMembers(members.filter((_,j) => j !== i))}><X size={16} /></button></div>)}<button type="button" className="outline-button" disabled={members.length + 1 >= catalog.config.teamMax} onClick={() => setMembers([...members, ""])}><Plus size={15} /> ADD MEMBER</button><small>{members.length + 1} members including captain · permitted {catalog.config.teamMin}–{catalog.config.teamMax}</small></>}
         <label>Competition<select value={competitionId} onChange={e => { setCompetitionId(e.target.value); const c = catalog.competitions.find(c => c.id === e.target.value); if (c) { setCaseId(c.caseId); setDifficulty(c.difficulty); } }}><option value="">Practice investigation</option>{catalog.competitions.filter(c => c.participation === "both" || c.participation === mode).map(c => <option key={c.id} value={c.id}>{c.title}</option>)}</select></label>
         <label>Case<select value={caseId} disabled={!!competitionId} onChange={e => setCaseId(e.target.value)}>{catalog.cases.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}</select></label>
-        <label>Difficulty<select value={difficulty} disabled={!!competitionId} onChange={e => setDifficulty(e.target.value)}>{difficulties.map(d => <option key={d}>{d}</option>)}</select></label>
+         <label>Difficulty<select value={difficulty} disabled={!!competitionId} onChange={e => setDifficulty(e.target.value)}>{difficulties.map(d => <option key={d} value={d}>{d}</option>)}</select></label>
         <p>{catalog.config.profiles[difficulty]?.records} records · {duration(catalog.config.profiles[difficulty]?.seconds * 1000)} · up to {1000 + catalog.config.speedBonus} points · {catalog.config.hints ? `${catalog.config.hintPenalty} point penalty per hint` : "hints disabled"}</p>
         <button className="primary-button" disabled={busy || !nickname.trim() || !catalog.cases.length || (!catalog.config.solo && !catalog.config.teams)}>READ CASE BRIEFING <FileSearch size={17} /></button>
       </form>
@@ -105,6 +106,6 @@ export default function DigitalDetectiveGame({ onBack, onSessionChange }: { onBa
       <div className="dd-notes"><label htmlFor="investigation-notes">SHARED INVESTIGATION NOTES</label><textarea id="investigation-notes" value={progress.notes} maxLength={10000} onChange={e => update({ notes: e.target.value })} placeholder="Correlations, questions, timestamps…" /><div role="status">{saved || "Workspace recovery enabled"}<button className="text-button" onClick={() => void flush().catch(e => setError(e.message))}>SAVE NOW</button></div></div>
       </section></div>
     </> : null}
-  </div>;
+  </div></LocalizedContent>;
 }
 function EvidenceDetail({ evidence }: { evidence: Evidence }) { return <section className="dd-detail"><span className="eyebrow">{evidence.category} EVIDENCE</span><h3>{evidence.title}</h3><time>{evidence.timestamp}</time><dl>{Object.entries(evidence.details).map(([key,value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl></section>; }

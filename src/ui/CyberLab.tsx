@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { LocalizedContent, useLanguage } from "./i18n";
 import { ArrowLeft, ArrowRight, Check, ExternalLink, LockKeyhole, RotateCcw, Shield, ShieldCheck, X } from "lucide-react";
 import "./cyber-lab.css";
 
@@ -165,6 +166,7 @@ const experiments: Experiment[] = [
 ];
 
 export default function CyberLab() {
+  const { language, t } = useLanguage();
   const [activeId, setActiveId] = useState<ExperimentId | null>(null);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -200,14 +202,14 @@ export default function CyberLab() {
   };
 
   return (
-    <div className="page-content interior-page cyber-lab-page">
+    <LocalizedContent><div className="page-content interior-page cyber-lab-page">
       {activeExperiment && (
         <button className="back-link" onClick={backToLab}><ArrowLeft size={15} /> ALL EXPERIMENTS</button>
       )}
       <div className="cyber-lab-heading">
         <div>
-          <PageEyebrow>{activeExperiment ? `EXPERIMENT ${activeExperiment.number} · FICTIONAL SCENARIO` : "SAFE BY DESIGN · NO REAL PERSONAL DATA"}</PageEyebrow>
-          <h1>{activeExperiment ? <>{activeExperiment.title.split(" ").slice(0, -1).join(" ")} <span>{activeExperiment.title.split(" ").at(-1)}.</span></> : <>THE CYBER <span>LAB.</span></>}</h1>
+          <PageEyebrow>{activeExperiment ? language === "tr" ? `DENEY ${activeExperiment.number} · KURGUSAL SENARYO` : `EXPERIMENT ${activeExperiment.number} · FICTIONAL SCENARIO` : t("SAFE BY DESIGN · NO REAL PERSONAL DATA")}</PageEyebrow>
+          <h1>{activeExperiment ? <>{t(activeExperiment.title).split(" ").slice(0, -1).join(" ")} <span>{t(activeExperiment.title).split(" ").at(-1)}.</span></> : <>THE CYBER <span>LAB.</span></>}</h1>
           <p>{activeExperiment ? activeExperiment.description : "Practice spotting privacy and security risks through short fictional scenarios. No real credentials or personal details are requested."}</p>
         </div>
         <div className="cyber-lab-emblem" aria-hidden="true"><Shield size={34} /><span>LEARN · CHECK · PROTECT</span></div>
@@ -261,7 +263,7 @@ export default function CyberLab() {
           <div className="cyber-completion-icon"><ShieldCheck size={26} /></div>
           <span className="eyebrow"><span className="eyebrow-line" /> EXPERIMENT COMPLETE · {activeExperiment.number} / 05</span>
           <h2>GOOD <span>INSTINCTS.</span></h2>
-          <p>You identified {correctAnswers} of {activeExperiment.questions.length} safety cues. The key habit: pause, inspect the details, and verify through a trusted route.</p>
+           <p>{language === "tr" ? `${activeExperiment.questions.length} güvenlik ipucundan ${correctAnswers} tanesini buldun. Temel alışkanlık: dur, ayrıntıları incele ve güvenilir bir yoldan doğrula.` : `You identified ${correctAnswers} of ${activeExperiment.questions.length} safety cues. The key habit: pause, inspect the details, and verify through a trusted route.`}</p>
           <div className="complete-actions">
             <button className="primary-button" onClick={() => startExperiment(activeExperiment.id)}><RotateCcw size={15} /> TRY AGAIN</button>
             <button className="outline-button" onClick={backToLab}>ALL EXPERIMENTS <ArrowLeft size={14} /></button>
@@ -270,7 +272,7 @@ export default function CyberLab() {
       )}
 
       <p className="cyber-lab-reference"><ExternalLink size={12} /> Awareness activities are educational simulations, not incident-response advice.</p>
-    </div>
+    </div></LocalizedContent>
   );
 }
 

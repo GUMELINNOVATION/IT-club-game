@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useLanguage } from "./i18n";
 
 export type Ranking = { id: string; rank: number; challenger: string; score: number; completedAt: number };
 export type Rankings = { game: string; entries: Ranking[]; updatedAt: string };
@@ -168,10 +169,12 @@ export function useGameSession(game: string, phase: string, score: number) {
 }
 
 export function ChallengerName({ value, onChange }: { value: string; onChange: (value: string) => void }) {
-  return <label className="challenger-name">CALL SIGN <small>PUBLIC ON THE HALL OF FAME · OPTIONAL</small><input className="call-sign-input" value={value} onChange={(event) => onChange(event.target.value)} maxLength={24} placeholder="Anonymous Challenger" /></label>;
+  const { t } = useLanguage();
+  return <label className="challenger-name">{t("CALL SIGN")} <small>{t("PUBLIC ON THE HALL OF FAME · OPTIONAL")}</small><input className="call-sign-input" value={value} onChange={(event) => onChange(event.target.value)} maxLength={24} placeholder={t("Anonymous Challenger")} /></label>;
 }
 
 export function ScoreStatus({ status, failed, retry }: { status: string; failed: boolean; retry: () => void }) {
+  const { t } = useLanguage();
   if (!status) return null;
-  return <div className={`score-save-status ${failed ? "save-failed" : ""}`} role="status">{status}{failed && <button className="outline-button" onClick={retry}>RETRY SAVE</button>}</div>;
+  return <div className={`score-save-status ${failed ? "save-failed" : ""}`} role="status">{t(status)}{failed && <button className="outline-button" onClick={retry}>{t("RETRY SAVE")}</button>}</div>;
 }

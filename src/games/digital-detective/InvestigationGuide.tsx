@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { BookOpen, Lightbulb } from "lucide-react";
+import { LocalizedContent } from "../../ui/i18n";
 
 export default function InvestigationGuide({ active, hintPenalty }: { active: boolean; hintPenalty?: number }) {
   const [open, setOpen] = useState(false);
-  return <section className="dd-guide dd-panel" aria-label="Investigation help">
+  return <LocalizedContent><section className="dd-guide dd-panel" aria-label="Investigation help">
     <button className="outline-button" aria-expanded={open} aria-controls="detective-guide-content" onClick={() => setOpen(!open)}><BookOpen size={17} /> {open ? "CLOSE GUIDE" : "HOW TO PLAY · FREE GUIDE"}</button>
     {open && <div id="detective-guide-content">
       <h2>Your investigator's field guide</h2>
@@ -22,5 +23,5 @@ export default function InvestigationGuide({ active, hintPenalty }: { active: bo
       <details><summary>Scoring, saving and team tips</summary><p>Base points: incident 150, entry 150, account/asset 150, timeline 200, evidence 200, containment 100, completeness 50. Up to 200 speed points require 70% accuracy. Relevant citations and written reasoning are required for conclusion credit; selecting everything reduces credit.</p><p>Use shared notes as your scratchpad. Watch for Workspace saved; refresh restores progress. The server clock continues during disconnections. At timeout the last server-saved report draft is scored.</p><p>Teams share one screen and one report. Discuss alternative explanations; one member can drive while others verify the timeline and evidence. No teammate accounts or other devices are needed.</p></details>
       <p className="dd-hint"><Lightbulb size={16} /> Case hints are separate from this free guide{hintPenalty === undefined ? "." : ` and cost ${hintPenalty} points each. You can reread unlocked hints for free.`}</p>
     </div>}
-  </section>;
+  </section></LocalizedContent>;
 }

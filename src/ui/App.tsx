@@ -33,6 +33,7 @@ const DigitalDetectiveGame = lazy(() => import("../games/digital-detective/Digit
 const DetectiveAdmin = lazy(() => import("../games/digital-detective/DetectiveAdmin"));
 const DetectiveLeaderboard = lazy(() => import("../games/digital-detective/DetectiveLeaderboard"));
 import CyberLab from "./CyberLab";
+import { LocalizedContent, useLanguage } from "./i18n";
 
 type Page = "home" | "games" | "zero-point" | "target-rush" | "perfect-align" | "brain-firewall" | "snake" | "myth-fact" | "digital-detective" | "leaderboard" | "cyber-lab" | "admin";
 type AdminUser = { id: number; username: string; role: string };
@@ -122,6 +123,7 @@ const navItems: { label: string; page: Page; icon: typeof Gamepad2 }[] = [
 ];
 
 function App() {
+  const { language, setLanguage, t } = useLanguage();
   const [page, setPage] = useState<Page>(() => window.location.pathname === "/staff" ? "admin" : window.location.pathname === "/digital-detective" ? "digital-detective" : "home");
   const [menuOpen, setMenuOpen] = useState(false);
   const [admin, setAdmin] = useState<AdminUser | null>(null);
@@ -190,36 +192,37 @@ function App() {
     <div className="app-shell">
       <div className="star-field" aria-hidden="true" />
       <header className="topbar">
-        <button className="brand" onClick={() => navigate("home")} aria-label="EMUCON Arena home">
+        <button className="brand" onClick={() => navigate("home")} aria-label={t("EMUCON Arena home")}>
           <span className="brand-logos" aria-label="EMU Information Technologies Club and Eastern Mediterranean University">
             <img src="/brand/it-club-logo.svg" alt="EMU Information Technologies Club" />
             <img src="/brand/emu-logo.png" alt="Eastern Mediterranean University" />
           </span>
-          <span className="brand-copy"><strong>EMUCON<span>26</span></strong><small>EMU IT CLUB · CHALLENGE ARENA</small></span>
+          <span className="brand-copy"><strong>EMUCON<span>26</span></strong><small>{t("EMU IT CLUB · CHALLENGE ARENA")}</small></span>
         </button>
 
-        <nav className={`desktop-nav ${menuOpen ? "nav-open" : ""}`} aria-label="Main navigation">
+        <nav className={`desktop-nav ${menuOpen ? "nav-open" : ""}`} aria-label={t("Main navigation")}>
           {navItems.map(({ label, page: target, icon: Icon }) => (
             <button key={target} className={`nav-link ${page === target ? "active" : ""}`} onClick={() => navigate(target)}>
-              <Icon size={15} />{label}
+              <Icon size={15} />{t(label)}
             </button>
           ))}
         </nav>
 
         <div className="top-actions">
-          <span className="live-status"><i className={health === "online" ? "status-dot" : "status-dot muted-dot"} />{health === "online" ? "SYSTEM ONLINE" : health === "offline" ? "OFFLINE MODE" : "CONNECTING"}</span>
-          <button className="icon-button sound-button" onClick={() => { const next = !muted; setMuted(next); setSoundMuted(next); }} aria-label={muted ? "Enable sound" : "Mute sound"} title={muted ? "Sound off" : "Sound on"}>
+          <label className="language-picker"><span className="sr-only">Language / Dil</span><select aria-label="Language / Dil" value={language} onChange={(event) => setLanguage(event.target.value === "tr" ? "tr" : "en")}><option value="en">English</option><option value="tr">Türkçe</option></select></label>
+          <span className="live-status"><i className={health === "online" ? "status-dot" : "status-dot muted-dot"} />{t(health === "online" ? "SYSTEM ONLINE" : health === "offline" ? "OFFLINE MODE" : "CONNECTING")}</span>
+          <button className="icon-button sound-button" onClick={() => { const next = !muted; setMuted(next); setSoundMuted(next); }} aria-label={t(muted ? "Enable sound" : "Mute sound")} title={t(muted ? "Sound off" : "Sound on")}>
             <AudioLines size={17} className={muted ? "sound-muted" : ""} />
           </button>
-          {admin && <button className="admin-button" onClick={() => navigate("admin")}><LockKeyhole size={14} />Admin</button>}
-          <button className="icon-button mobile-menu" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? "Close menu" : "Open menu"}>
+          {admin && <button className="admin-button" onClick={() => navigate("admin")}><LockKeyhole size={14} />{t("Admin")}</button>}
+          <button className="icon-button mobile-menu" onClick={() => setMenuOpen(!menuOpen)} aria-label={t(menuOpen ? "Close menu" : "Open menu")}>
             {menuOpen ? <X size={21} /> : <Menu size={21} />}
           </button>
         </div>
       </header>
 
       <main>
-        <Suspense fallback={<div className="page-content interior-page" role="status">Opening investigation tools…</div>}>
+        <Suspense fallback={<div className="page-content interior-page" role="status">{t("Opening investigation tools…")}</div>}>
         {page === "home" && <HomePage onNavigate={navigate} />}
         {page === "games" && <GamesPage onNavigate={navigate} />}
         {page === "zero-point" && <ZeroPointGame onBack={() => navigate("games")} />}
@@ -238,19 +241,20 @@ function App() {
       </main>
 
       <footer className="site-footer">
-        <span>MISSION IT <span className="footer-dot">·</span> HACK YOUR LIMITS</span>
-        <span>EMUCON 2026 <span className="footer-dot">·</span> EASTERN MEDITERRANEAN UNIVERSITY</span>
-        <button onClick={() => document.documentElement.requestFullscreen?.()} className="presentation-button"><Sparkles size={13} /> PRESENTATION MODE</button>
+        <span>MISSION IT <span className="footer-dot">·</span> {t("HACK YOUR LIMITS")}</span>
+        <span>EMUCON 2026 <span className="footer-dot">·</span> {t("EASTERN MEDITERRANEAN UNIVERSITY")}</span>
+        <button onClick={() => document.documentElement.requestFullscreen?.()} className="presentation-button"><Sparkles size={13} /> {t("PRESENTATION MODE")}</button>
       </footer>
 
       {loginOpen && <AdminLogin onClose={() => { setLoginOpen(false); if (!admin && window.location.pathname === "/staff") navigate("home"); }} onSuccess={(user) => { setAdmin(user); navigate("admin"); }} />}
-      {pendingDetectivePage && <div className="modal-backdrop"><section className="login-modal dd-reset-dialog" role="dialog" aria-modal="true" aria-labelledby="detective-exit-title" onKeyDown={e => { if (e.key === "Escape" && !detectiveResetBusy) setPendingDetectivePage(null); }}><span className="eyebrow">INVESTIGATION SESSION</span><h2 id="detective-exit-title">Finish & leave?</h2><p>Clear this device's investigation notes, nickname and signed-in session before leaving. Official scores and submitted reports remain saved.</p>{detectiveResetError && <p className="login-error" role="alert">{detectiveResetError}</p>}<div className="dd-tools"><button autoFocus className="outline-button" disabled={detectiveResetBusy} onClick={() => setPendingDetectivePage(null)}>CONTINUE INVESTIGATING</button><button className="primary-button" disabled={detectiveResetBusy} onClick={() => void finishDetectiveNavigation()}>{detectiveResetBusy ? "FINISHING…" : "FINISH & LEAVE"}</button></div></section></div>}
-      <span className="sound-state" aria-live="polite">{muted ? "Sound muted" : "Sound enabled"}</span>
+      {pendingDetectivePage && <LocalizedContent><div className="modal-backdrop"><section className="login-modal dd-reset-dialog" role="dialog" aria-modal="true" aria-labelledby="detective-exit-title" onKeyDown={e => { if (e.key === "Escape" && !detectiveResetBusy) setPendingDetectivePage(null); }}><span className="eyebrow">INVESTIGATION SESSION</span><h2 id="detective-exit-title">Finish & leave?</h2><p>Clear this device's investigation notes, nickname and signed-in session before leaving. Official scores and submitted reports remain saved.</p>{detectiveResetError && <p className="login-error" role="alert">{detectiveResetError}</p>}<div className="dd-tools"><button autoFocus className="outline-button" disabled={detectiveResetBusy} onClick={() => setPendingDetectivePage(null)}>CONTINUE INVESTIGATING</button><button className="primary-button" disabled={detectiveResetBusy} onClick={() => void finishDetectiveNavigation()}>{detectiveResetBusy ? "FINISHING…" : "FINISH & LEAVE"}</button></div></section></div></LocalizedContent>}
+      <span className="sound-state" aria-live="polite">{t(muted ? "Sound muted" : "Sound enabled")}</span>
     </div>
   );
 }
 
 function HomePage({ onNavigate }: { onNavigate: (page: Page) => void }) {
+  const { language, t } = useLanguage();
   const { data: records, error } = useLiveData<Record<string, Rankings>>("/api/leaderboards");
   const leaders = games.flatMap((game) => {
     const first = records?.[game.id]?.entries[0];
@@ -258,30 +262,30 @@ function HomePage({ onNavigate }: { onNavigate: (page: Page) => void }) {
   });
   return (
     <div className="page-content home-page">
-      <div className="event-strip"><span className="event-dot" /> EASTERN MEDITERRANEAN UNIVERSITY <span className="strip-divider">/</span> SATURDAY, 24 OCTOBER 2026 <span className="strip-divider">/</span> YASIN DÜŞÜNER STADIUM</div>
+      <div className="event-strip"><span className="event-dot" /> {t("EASTERN MEDITERRANEAN UNIVERSITY")} <span className="strip-divider">/</span> {t("SATURDAY, 24 OCTOBER 2026")} <span className="strip-divider">/</span> {t("YASIN DÜŞÜNER STADIUM")}</div>
       <section className="hero">
         <div className="hero-copy">
-          <div className="eyebrow"><span className="eyebrow-line" /> YOUR NEXT MISSION STARTS HERE</div>
-          <h1>PLAY THE<br /><span>UNKNOWN.</span></h1>
-          <p className="hero-description">{games.length} challenges. One arena. Test your reflexes, sharpen your instincts, and find out if you've got what it takes.</p>
+          <div className="eyebrow"><span className="eyebrow-line" /> {t("YOUR NEXT MISSION STARTS HERE")}</div>
+          <h1>{t("PLAY THE")}<br /><span>{t("UNKNOWN.")}</span></h1>
+          <p className="hero-description">{language === "tr" ? `${games.length} oyun. Tek arena. Reflekslerini test et, içgüdülerini geliştir ve neler yapabileceğini keşfet.` : `${games.length} challenges. One arena. Test your reflexes, sharpen your instincts, and find out if you've got what it takes.`}</p>
           <div className="hero-buttons">
-            <button className="primary-button" onClick={() => onNavigate("games")}>ENTER THE ARENA <ArrowUpRight size={17} /></button>
-            <button className="text-button" onClick={() => onNavigate("leaderboard")}><Trophy size={15} /> VIEW HALL OF FAME</button>
+            <button className="primary-button" onClick={() => onNavigate("games")}>{t("ENTER THE ARENA")} <ArrowUpRight size={17} /></button>
+            <button className="text-button" onClick={() => onNavigate("leaderboard")}><Trophy size={15} /> {t("VIEW HALL OF FAME")}</button>
           </div>
           <div className="event-meta">
-            <div><span className="meta-label">IT STAND</span><strong>15:00 — 19:00</strong></div>
+            <div><span className="meta-label">{t("IT STAND")}</span><strong>15:00 — 19:00</strong></div>
             <div className="meta-separator" />
-            <div><span className="meta-label">THEME</span><strong>MISSION IT</strong></div>
+            <div><span className="meta-label">{t("THEME")}</span><strong>MISSION IT</strong></div>
             <div className="meta-separator" />
-            <div><span className="meta-label">ENTRY</span><strong>OPEN TO ALL</strong></div>
+            <div><span className="meta-label">{t("ENTRY")}</span><strong>{t("OPEN TO ALL")}</strong></div>
           </div>
         </div>
         <div className="hero-art" aria-label="Abstract neon orbital illustration">
           <div className="orbit orbit-one" /><div className="orbit orbit-two" /><div className="orbit orbit-three" />
           <div className="planet-core"><span className="planet-glow" /><Orbit size={54} strokeWidth={0.8} /></div>
           <div className="orbit-node node-one" /><div className="orbit-node node-two" />
-          <div className="art-label label-top"><span>EMISSION</span><b>ACTIVE</b></div>
-          <div className="art-label label-bottom"><span>SECTOR</span><b>EMU · 26</b></div>
+          <div className="art-label label-top"><span>{t("EMISSION")}</span><b>{t("ACTIVE")}</b></div>
+          <div className="art-label label-bottom"><span>{t("SECTOR")}</span><b>EMU · 26</b></div>
           <span className="art-cross cross-one">+</span><span className="art-cross cross-two">+</span>
         </div>
         <div className="hero-index"><span>01</span><i /> {String(games.length).padStart(2, "0")}</div>
@@ -289,63 +293,65 @@ function HomePage({ onNavigate }: { onNavigate: (page: Page) => void }) {
 
       <section className="challenge-section">
         <div className="section-heading">
-          <div><span className="eyebrow"><span className="eyebrow-line" /> CHOOSE YOUR CHALLENGE</span><h2>{games.length} ways to <span>make your mark.</span></h2></div>
-          <button className="section-link" onClick={() => onNavigate("games")}>ALL CHALLENGES <ArrowUpRight size={15} /></button>
+          <div><span className="eyebrow"><span className="eyebrow-line" /> {t("CHOOSE YOUR CHALLENGE")}</span><h2>{games.length} {t("ways to")} <span>{t("make your mark.")}</span></h2></div>
+          <button className="section-link" onClick={() => onNavigate("games")}>{t("ALL CHALLENGES")} <ArrowUpRight size={15} /></button>
         </div>
         <div className="game-grid">
           {games.map(({ id, number, title, category, description, difficulty, duration, icon: Icon, color }) => (
-            <article className={`game-card ${color}`} key={title} role="button" tabIndex={0} aria-label={`Play ${title}`}
+            <article className={`game-card ${color}`} key={title} role="button" tabIndex={0} aria-label={language === "tr" ? `${title} oyna` : `Play ${title}`}
               onClick={() => onNavigate(id as Page)}
               onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onNavigate(id as Page); } }}>
               <div className="card-top"><span className="card-number">{number} <span>/ {String(games.length).padStart(2, "0")}</span></span><Icon className="game-icon" size={21} strokeWidth={1.6} /></div>
-              <span className="game-category">{category}</span>
+              <span className="game-category">{t(category)}</span>
               <h3>{title}</h3>
-              <p>{description}</p>
-              <div className="card-data"><span>{difficulty}</span><span>{duration}</span></div>
-              <div className="card-bottom"><span>{id === "digital-detective" ? "RECORDS" : "TOP SCORE"} <b>{id === "digital-detective" ? "CASE BOARDS" : records?.[id]?.entries[0]?.score.toLocaleString() ?? (error ? "OFFLINE" : records ? "—" : "…")}</b></span><span className="card-play">PLAY <ChevronRight size={15} /></span></div>
+              <p>{t(description)}</p>
+              <div className="card-data"><span>{t(difficulty)}</span><span>{t(duration)}</span></div>
+              <div className="card-bottom"><span>{t(id === "digital-detective" ? "RECORDS" : "TOP SCORE")} <b>{id === "digital-detective" ? t("CASE BOARDS") : records?.[id]?.entries[0]?.score.toLocaleString(language) ?? (error ? t("OFFLINE") : records ? "—" : "…")}</b></span><span className="card-play">{t("PLAY")} <ChevronRight size={15} /></span></div>
             </article>
           ))}
         </div>
       </section>
       <section className="lower-grid">
         <button className="cyber-lab-card" onClick={() => onNavigate("cyber-lab")}>
-          <span className="cyber-icon"><Shield size={20} /></span><span className="eyebrow">LEARN BY DOING</span>
-          <h3>Curious about<br />your digital footprint?</h3><span className="cyber-link">STEP INTO THE CYBER LAB <ArrowUpRight size={15} /></span>
+          <span className="cyber-icon"><Shield size={20} /></span><span className="eyebrow">{t("LEARN BY DOING")}</span>
+          <h3>{t("Curious about")}<br />{t("your digital footprint?")}</h3><span className="cyber-link">{t("STEP INTO THE CYBER LAB")} <ArrowUpRight size={15} /></span>
         </button>
         <div className="leaderboard-preview">
-          <div className="preview-heading"><div><span className="eyebrow"><span className="eyebrow-line" /> THE FRONT RUNNERS</span><h3>Hall of Fame</h3></div><Trophy size={20} /></div>
-          {leaders.length ? <div className="preview-leaders">{leaders.map((leader) => <div key={leader.game}><span><strong>{leader.challenger}</strong><small>{leader.game}</small></span><b>{leader.score.toLocaleString()}</b></div>)}</div> : <div className="empty-score"><span className="score-orbit"><Orbit size={22} /></span><div><strong>{error ? "RANKINGS UNAVAILABLE" : !records ? "LOADING RANKINGS…" : "YOUR NAME COULD BE HERE"}</strong><small>{error ? "Reconnecting to the arena…" : "The arena awaits its first challenger."}</small></div></div>}
-          <button className="preview-link" onClick={() => onNavigate("leaderboard")}>VIEW LEADERBOARD <ArrowUpRight size={14} /></button>
+          <div className="preview-heading"><div><span className="eyebrow"><span className="eyebrow-line" /> {t("THE FRONT RUNNERS")}</span><h3>{t("Hall of Fame")}</h3></div><Trophy size={20} /></div>
+          {leaders.length ? <div className="preview-leaders">{leaders.map((leader) => <div key={leader.game}><span><strong>{leader.challenger}</strong><small>{leader.game}</small></span><b>{leader.score.toLocaleString(language)}</b></div>)}</div> : <div className="empty-score"><span className="score-orbit"><Orbit size={22} /></span><div><strong>{t(error ? "RANKINGS UNAVAILABLE" : !records ? "LOADING RANKINGS…" : "YOUR NAME COULD BE HERE")}</strong><small>{t(error ? "Reconnecting to the arena…" : "The arena awaits its first challenger.")}</small></div></div>}
+          <button className="preview-link" onClick={() => onNavigate("leaderboard")}>{t("VIEW LEADERBOARD")} <ArrowUpRight size={14} /></button>
         </div>
       </section>
-      <div className="mission-banner"><Sparkles size={14} /><span>MISSION IT</span><i /> HACK YOUR LIMITS <i /><span>24.10.26</span></div>
+      <div className="mission-banner"><Sparkles size={14} /><span>MISSION IT</span><i /> {t("HACK YOUR LIMITS")} <i /><span>24.10.26</span></div>
     </div>
   );
 }
 
 function GamesPage({ onNavigate }: { onNavigate: (page: Page) => void }) {
-  return <div className="page-content interior-page"><PageHeading label="SELECT YOUR MISSION" title={<>THE <span>ARENA.</span></>} description={`${games.length} playable challenges. Choose your mission, read its quick guide, and take on the arena.`} />
-    <div className="game-grid expanded-games">{games.map(({ id, number, title, category, description, difficulty, duration, icon: Icon, color }) => <article className={`game-card ${color}`} key={title} role="button" tabIndex={0} aria-label={`Play ${title}`}
+  const { language, t } = useLanguage();
+  return <div className="page-content interior-page"><PageHeading label="SELECT YOUR MISSION" title={<>{t("THE")} <span>{t("ARENA.")}</span></>} description={language === "tr" ? `${games.length} oynanabilir oyun. Görevini seç, hızlı rehberini oku ve arenaya katıl.` : `${games.length} playable challenges. Choose your mission, read its quick guide, and take on the arena.`} />
+    <div className="game-grid expanded-games">{games.map(({ id, number, title, category, description, difficulty, duration, icon: Icon, color }) => <article className={`game-card ${color}`} key={title} role="button" tabIndex={0} aria-label={language === "tr" ? `${title} oyna` : `Play ${title}`}
       onClick={() => onNavigate(id as Page)}
       onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onNavigate(id as Page); } }}>
-      <div className="card-top"><span className="card-number">{number} <span>/ {String(games.length).padStart(2, "0")}</span></span><Icon className="game-icon" size={21} /></div><span className="game-category">{category}</span><h3>{title}</h3><p>{description}</p>
-      <div className="card-data"><span>{difficulty}</span><span>{duration}</span></div><div className="card-bottom play-row"><span>{id === "snake" ? "ARROW KEYS · + / − PICKUPS" : `${category} CHALLENGE`}</span><span className="card-play">PLAY <ChevronRight size={15} /></span></div>
+      <div className="card-top"><span className="card-number">{number} <span>/ {String(games.length).padStart(2, "0")}</span></span><Icon className="game-icon" size={21} /></div><span className="game-category">{t(category)}</span><h3>{title}</h3><p>{t(description)}</p>
+      <div className="card-data"><span>{t(difficulty)}</span><span>{t(duration)}</span></div><div className="card-bottom play-row"><span>{id === "snake" ? t("ARROW KEYS · + / − PICKUPS") : `${t(category)} ${t("CHALLENGE")}`}</span><span className="card-play">{t("PLAY")} <ChevronRight size={15} /></span></div>
     </article>)}</div>
   </div>;
 }
 
 function LeaderboardPage() {
+  const { language, t } = useLanguage();
   const [selected, setSelected] = useState(games[0].id);
   const { data, error, live } = useLiveData<Rankings>(`/api/leaderboard/${selected}`);
-  return <div className="page-content interior-page"><PageHeading label="THE BEST OF THE BEST" title={<>HALL OF <span>FAME.</span></>} description="Every legend starts with a first attempt. Myth or Fact boards are split by mode and rule version so only comparable runs compete." />
+  return <div className="page-content interior-page"><PageHeading label="THE BEST OF THE BEST" title={<>{t("HALL OF")} <span>{t("FAME.")}</span></>} description="Every legend starts with a first attempt. Myth or Fact boards are split by mode and rule version so only comparable runs compete." />
     <div className="leaderboard-panel">
-      <div className="leaderboard-tabs" role="tablist" aria-label="Game rankings">{games.map((game) => <button role="tab" aria-selected={selected === game.id} aria-controls="game-rankings" id={`tab-${game.id}`} className={selected === game.id ? "selected" : ""} key={game.id} onClick={() => setSelected(game.id)}>{game.title.toUpperCase()}</button>)}</div>
+      <div className="leaderboard-tabs" role="tablist" aria-label={t("Game rankings")}>{games.map((game) => <button role="tab" aria-selected={selected === game.id} aria-controls="game-rankings" id={`tab-${game.id}`} className={selected === game.id ? "selected" : ""} key={game.id} onClick={() => setSelected(game.id)}>{game.title.toUpperCase()}</button>)}</div>
       {selected === "myth-fact" ? <MythFactLeaderboard /> : selected === "digital-detective" ? <div id="game-rankings" role="tabpanel" aria-labelledby="tab-digital-detective"><DetectiveLeaderboard /></div> : <div id="game-rankings" role="tabpanel" aria-labelledby={`tab-${selected}`} aria-busy={!data && !error}>
-        <div className="leaderboard-head"><span>RANK</span><span>CHALLENGER</span><span>SCORE</span><span>DATE</span></div>
-        {error && <div className="ranking-error" role="status">Connection interrupted. {data ? "Showing the last received rankings." : "Reconnecting to the arena…"}</div>}
-        {data?.entries.length ? <div className="leaderboard-rows">{data.entries.map((entry) => <div className={`leaderboard-row ${entry.rank <= 3 ? "podium-row" : ""}`} key={entry.id}><span className="rank-number">{entry.rank <= 3 && <Trophy size={14} />} {String(entry.rank).padStart(2, "0")}</span><strong>{entry.challenger}</strong><b>{entry.score.toLocaleString()}</b><time dateTime={new Date(entry.completedAt).toISOString()} title={new Date(entry.completedAt).toLocaleString()}>{new Date(entry.completedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</time></div>)}</div> : <div className="leaderboard-empty"><Trophy size={28} /><strong>{!data ? error ? "RANKINGS UNAVAILABLE" : "LOADING RANKINGS…" : "THE PODIUM IS EMPTY"}</strong><p>{!data ? "Connecting to live event scores." : "Be the first to put your name on the board."}</p><span>THE NEXT RECORD COULD BE YOURS</span></div>}
+        <div className="leaderboard-head"><span>{t("RANK")}</span><span>{t("CHALLENGER")}</span><span>{t("SCORE")}</span><span>{t("DATE")}</span></div>
+        {error && <div className="ranking-error" role="status">{t("Connection interrupted.")} {t(data ? "Showing the last received rankings." : "Reconnecting to the arena…")}</div>}
+        {data?.entries.length ? <div className="leaderboard-rows">{data.entries.map((entry) => <div className={`leaderboard-row ${entry.rank <= 3 ? "podium-row" : ""}`} key={entry.id}><span className="rank-number">{entry.rank <= 3 && <Trophy size={14} />} {String(entry.rank).padStart(2, "0")}</span><strong>{entry.challenger}</strong><b>{entry.score.toLocaleString(language)}</b><time dateTime={new Date(entry.completedAt).toISOString()} title={new Date(entry.completedAt).toLocaleString(language)}>{new Date(entry.completedAt).toLocaleDateString(language, { month: "short", day: "numeric" })}</time></div>)}</div> : <div className="leaderboard-empty"><Trophy size={28} /><strong>{t(!data ? error ? "RANKINGS UNAVAILABLE" : "LOADING RANKINGS…" : "THE PODIUM IS EMPTY")}</strong><p>{t(!data ? "Connecting to live event scores." : "Be the first to put your name on the board.")}</p><span>{t("THE NEXT RECORD COULD BE YOURS")}</span></div>}
       </div>}
-      <div className="leaderboard-foot"><span>LIVE EVENT RANKINGS · BEST RUN PER CHALLENGER</span><span>{live ? "UPDATED IN REAL TIME" : error ? "RECONNECTING" : "AUTO REFRESH · 15 SEC"} <i className={`status-dot ${live ? "" : "muted-dot"}`} /></span></div>
+      <div className="leaderboard-foot"><span>{t("LIVE EVENT RANKINGS · BEST RUN PER CHALLENGER")}</span><span>{t(live ? "UPDATED IN REAL TIME" : error ? "RECONNECTING" : "AUTO REFRESH · 15 SEC")} <i className={`status-dot ${live ? "" : "muted-dot"}`} /></span></div>
     </div>
   </div>;
 }
@@ -360,7 +366,7 @@ function MythFactLeaderboard() {
   const boards = data?.boards ?? [];
   const current = boards.some((item) => item.key === board) ? board : boards[0]?.key ?? "";
   const rows = (data?.entries ?? []).filter((entry) => entry.boardKey === current);
-  return <div id="game-rankings" role="tabpanel" aria-labelledby="tab-myth-fact" aria-busy={!data && !error}>
+  return <LocalizedContent><div id="game-rankings" role="tabpanel" aria-labelledby="tab-myth-fact" aria-busy={!data && !error}>
     {error && <div className="ranking-error" role="status">Connection interrupted. {data ? "Showing the last received rankings." : "Reconnecting to the arena…"}</div>}
     {!data ? <div className="leaderboard-empty"><Trophy size={28} /><strong>{error ? "RANKINGS UNAVAILABLE" : "LOADING RANKINGS…"}</strong><p>Connecting to the Digital Truth boards.</p><span>EVERY MODE HAS ITS OWN ARENA</span></div>
       : !data.visible ? <div className="leaderboard-empty"><Trophy size={28} /><strong>LEADERBOARDS ARE HIDDEN</strong><p>Staff have temporarily hidden public rankings for this game.</p><span>ASK AN EVENT VOLUNTEER FOR RESULTS</span></div>
@@ -373,7 +379,7 @@ function MythFactLeaderboard() {
         </table></div>
         <div className="leaderboard-foot"><span>{rows.length} SHOWN · BEST RUN PER PARTICIPANT OR TEAM FOR THESE RULES</span><span>{live ? "UPDATED IN REAL TIME" : "AUTO REFRESH · 15 SEC"} <i className={`status-dot ${live ? "" : "muted-dot"}`} /></span></div>
       </>}
-  </div>;
+  </div></LocalizedContent>;
 }
 
 function AdminPage({ admin, onLogout }: { admin: AdminUser | null; onLogout: () => void }) {
@@ -392,7 +398,8 @@ function StatCard({ label, value, icon: Icon }: { label: string; value: string; 
 }
 
 function PageHeading({ label, title, description }: { label: string; title: React.ReactNode; description: string }) {
-  return <div className="page-heading"><span className="eyebrow"><span className="eyebrow-line" /> {label}</span><h1>{title}</h1><p>{description}</p></div>;
+  const { t } = useLanguage();
+  return <div className="page-heading"><span className="eyebrow"><span className="eyebrow-line" /> {t(label)}</span><h1>{title}</h1><p>{t(description)}</p></div>;
 }
 
 function AdminLogin({ onClose, onSuccess }: { onClose: () => void; onSuccess: (user: AdminUser) => void }) {

@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { ChallengerName, useChallengerIdentity } from "../../ui/arena-data";
 import { playSound } from "../../ui/sound";
+import { LocalizedContent } from "../../ui/i18n";
 import "./myth-fact.css";
 
 type Mode = "classic" | "speed" | "survival" | "confidence" | "team" | "event";
@@ -248,9 +249,9 @@ export default function MythFactGame({ onBack }: { onBack: () => void }) {
     playSound("tap");
   };
 
-  if (loading) return <div className="page-content interior-page myth-page"><button className="back-link" onClick={onBack}><ArrowLeft size={15} /> BACK TO CHALLENGES</button><div className="myth-loading" role="status">LOADING THE TRUTH ENGINE…</div></div>;
+  if (loading) return <LocalizedContent><div className="page-content interior-page myth-page"><button className="back-link" onClick={onBack}><ArrowLeft size={15} /> BACK TO CHALLENGES</button><div className="myth-loading" role="status">LOADING THE TRUTH ENGINE…</div></div></LocalizedContent>;
 
-  return <div className="page-content interior-page myth-page">
+  return <LocalizedContent><div className="page-content interior-page myth-page">
     <button className="back-link" onClick={onBack}><ArrowLeft size={15} /> BACK TO CHALLENGES</button>
     {error && <div className="myth-error" role="alert"><ShieldAlert size={16} /> {error}</div>}
 
@@ -442,5 +443,5 @@ export default function MythFactGame({ onBack }: { onBack: () => void }) {
       </div>
       <p className="local-score-note">Scores, timing, confidence, and answers are validated by the server. Completed scores appear on their mode-specific hall of fame.</p>
     </section>}
-  </div>;
+  </div></LocalizedContent>;
 }

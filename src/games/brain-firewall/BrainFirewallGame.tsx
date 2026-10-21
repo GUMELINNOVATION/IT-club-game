@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { LocalizedContent } from "../../ui/i18n";
 import { ArrowLeft, ArrowRight, Check, CircleHelp, RotateCcw, ShieldAlert, Timer, Trophy, X } from "lucide-react";
 import { ChallengerName, ScoreStatus, useGameSession } from "../../ui/arena-data";
 import { createTopicQuiz, scoreAnswer, shuffleAnswers, type QuizAnswer, type QuizTopic } from "./engine";
@@ -111,7 +112,7 @@ export default function BrainFirewallGame({ onBack }: Props) {
   };
 
   return (
-    <div className="page-content interior-page brain-firewall-page">
+    <LocalizedContent><div className="page-content interior-page brain-firewall-page">
       <button className="back-link" onClick={onBack}><ArrowLeft size={15} /> BACK TO CHALLENGES</button>
       <ScoreStatus {...tracking} />
       {phase === "intro" && (
@@ -179,6 +180,6 @@ export default function BrainFirewallGame({ onBack }: Props) {
           <p className="local-score-note">Your best completed run appears in the Hall of Fame. Answers and score are browser-generated, not independently verified.</p>
         </section>
       )}
-    </div>
+    </div></LocalizedContent>
   );
 }

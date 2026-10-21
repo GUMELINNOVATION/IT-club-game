@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { LocalizedContent } from "../../ui/i18n";
 import { ArrowLeft, ArrowRight, Crosshair, RotateCcw, Target, Trophy } from "lucide-react";
 import { ChallengerName, ScoreStatus, useGameSession } from "../../ui/arena-data";
 import {
@@ -155,7 +156,7 @@ export default function PerfectAlignGame({ onBack }: Props) {
   };
 
   return (
-    <div className="page-content interior-page perfect-align-page">
+    <LocalizedContent><div className="page-content interior-page perfect-align-page">
       <button className="back-link" onClick={onBack}><ArrowLeft size={15} /> BACK TO CHALLENGES</button>
       <ScoreStatus {...tracking} />
       {phase === "intro" && (
@@ -228,6 +229,6 @@ export default function PerfectAlignGame({ onBack }: Props) {
           <p className="local-score-note">The score is submitted to the Hall of Fame. Gameplay is browser-scored and not server-replayed or verified for prizes.</p>
         </section>
       )}
-    </div>
+    </div></LocalizedContent>
   );
 }

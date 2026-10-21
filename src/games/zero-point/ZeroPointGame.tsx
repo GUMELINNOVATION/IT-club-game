@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Clock3, RotateCcw, Sparkles, Timer, Trophy } from "lucide-react";
 import { ScoreStatus, useGameSession } from "../../ui/arena-data";
+import { LocalizedContent } from "../../ui/i18n";
 import {
   createRoundResult,
   createRoundTargets,
@@ -142,7 +143,7 @@ export default function ZeroPointGame({ onBack }: Props) {
   };
 
   return (
-    <div className="page-content interior-page zero-point-page">
+    <LocalizedContent><div className="page-content interior-page zero-point-page">
       <button className="back-link" onClick={onBack}><ArrowLeft size={15} /> BACK TO CHALLENGES</button>
       <ScoreStatus {...tracking} />
 
@@ -211,7 +212,7 @@ export default function ZeroPointGame({ onBack }: Props) {
           <p className="local-score-note">Your best completed run represents you in the Hall of Fame.</p>
         </section>
       )}
-    </div>
+    </div></LocalizedContent>
   );
 }
 
@@ -223,7 +224,7 @@ function RoundResult({ result, roundIndex, totalRounds, onContinue }: {
 }) {
   const isNearPerfect = result.errorMs <= 25;
   return (
-    <section className={`round-result ${isNearPerfect ? "near-perfect" : ""}`}>
+    <LocalizedContent><section className={`round-result ${isNearPerfect ? "near-perfect" : ""}`}>
       <span className="eyebrow"><span className="eyebrow-line" /> ROUND {roundIndex + 1} COMPLETE · LEVEL {result.level}</span>
       <div className="result-icon">{isNearPerfect ? <Sparkles size={22} /> : <Timer size={22} />}</div>
       <h1>{isNearPerfect ? "INCREDIBLE." : "TIME CHECK."}</h1>
@@ -235,6 +236,6 @@ function RoundResult({ result, roundIndex, totalRounds, onContinue }: {
       </div>
       <p className="score-explanation">Round score = round(10,000 ÷ (1 + error in milliseconds ÷ 25)). A perfect stop earns 10,000 points.</p>
       <button className="primary-button" onClick={onContinue}>NEXT ROUND <ArrowRight size={15} /><small>{roundIndex + 2} / {totalRounds}</small></button>
-    </section>
+    </section></LocalizedContent>
   );
 }

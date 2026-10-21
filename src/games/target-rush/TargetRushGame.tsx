@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { LocalizedContent } from "../../ui/i18n";
 import { ArrowLeft, ArrowRight, Crosshair, RotateCcw, Target, Trophy } from "lucide-react";
 import { ChallengerName, ScoreStatus, useGameSession } from "../../ui/arena-data";
 import {
@@ -321,7 +322,7 @@ export default function TargetRushGame({ onBack }: Props) {
   };
 
   return (
-    <div className="page-content interior-page target-rush-page">
+    <LocalizedContent><div className="page-content interior-page target-rush-page">
       <button className="back-link" onClick={phase === "intro" ? onBack : backToIntro}><ArrowLeft size={15} /> BACK TO CHALLENGES</button>
       <ScoreStatus {...tracking} />
 
@@ -420,6 +421,6 @@ export default function TargetRushGame({ onBack }: Props) {
           <p className="local-score-note">Your best completed run represents you in the Hall of Fame.</p>
         </section>
       )}
-    </div>
+    </div></LocalizedContent>
   );
 }

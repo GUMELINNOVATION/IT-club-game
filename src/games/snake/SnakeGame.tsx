@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { LocalizedContent } from "../../ui/i18n";
 import { ArrowLeft, ArrowRight, Keyboard, Pause, Play, RotateCcw, Shield, Trophy, Zap } from "lucide-react";
 import { ChallengerName, ScoreStatus, useGameSession } from "../../ui/arena-data";
 import { advanceSnake, BOARD, createSnake, dronesAt, gateCells, gatePhase, MAX_LEVEL, queueTurn, RUN_LIMIT_MS, stepDuration, type Direction, type SnakeState } from "./engine";
@@ -108,7 +109,7 @@ export default function SnakeGame({ onBack }: { onBack: () => void }) {
 
   const gateStatus = gatePhase(state.tick, state.level);
   const secondsLeft = Math.ceil((RUN_LIMIT_MS - Math.min(state.elapsedMs, RUN_LIMIT_MS)) / 1000);
-  return <div className="page-content interior-page snake-page">
+  return <LocalizedContent><div className="page-content interior-page snake-page">
     <button className="back-link" onClick={onBack}><ArrowLeft size={18} /> BACK TO CHALLENGES</button>
     <ScoreStatus {...tracking} />
     {phase === "intro" ? <section className="snake-intro">
@@ -156,5 +157,5 @@ export default function SnakeGame({ onBack }: { onBack: () => void }) {
       <p className="snake-controls" id="snake-controls"><Keyboard size={19} /> ↑ ↓ ← → STEER <span>SPACE: BOOST −5 / MOVE</span><span>P / ESC: PAUSE</span></p>
       {phase === "complete" && <div className="snake-report"><div><span>POINTS EARNED</span><strong className="score-positive">+{state.earned.toLocaleString()}</strong></div><div><span>POINTS LOST</span><strong className="score-negative">−{state.penalties.toLocaleString()}</strong></div><div><span>BEST COMBO</span><strong>×{state.bestCombo || 1}</strong></div><div><span>DATA COLLECTED</span><strong>{state.foods}</strong></div></div>}
     </section>}
-  </div>;
+  </div></LocalizedContent>;
 }
