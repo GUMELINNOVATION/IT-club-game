@@ -1,14 +1,30 @@
 # EMUCON IT Challenge Arena — Player Guide
 
-Welcome to the EMUCON IT Challenge Arena. Pick one of six challenges, read its quick guide before you start, and play at your own pace. You do not need to create an account or provide contact information.
+Welcome to the EMUCON IT Challenge Arena. Pick one of seven challenges, read its quick guide before you start, and play at your own pace. You do not need to create an account or provide contact information.
 
 ## Before you play
 
-- A call sign is optional. If you choose one, it is saved in this browser for convenience and appears publicly beside your best score.
+- A call sign is optional in the arcade games. Digital Detective requires a nickname (and team roster when applicable). Names appear publicly with scores and may be saved in this browser until the session is finished.
 - Use a mouse, touch screen, or the keyboard controls shown in the game.
 - Sound is muted by default. Follow the on-screen instructions; you can play without sound.
 - A game may offer a **Back to Challenges** button. Leaving a live round ends that local run.
-- Completed scores are submitted to the live Hall of Fame. Myth or Fact answers and scores are validated by the server. The other five games calculate scores in the browser; those scores are not replayed or independently verified, so they should not be used to award prizes without additional event controls.
+- Completed scores are submitted to the live Hall of Fame. Myth or Fact and Digital Detective validate answers and scores on the server. The other five games calculate scores in the browser; those scores are not replayed or independently verified, so they should not be used to award prizes without additional event controls.
+
+## Digital Detective
+
+Investigate a fictional cyber incident solo or with a team sharing one laptop. Select the game from Challenges, or open `/digital-detective`.
+
+1. Choose Solo or Team and enter a nickname. Teams enter a team name, captain and additional member names; use Add Member/Remove Member on the same device. The default is 2–6 members including captain.
+2. Choose a case/difficulty or an organizer's competition. Read the briefing before selecting **Begin Investigation**, which starts the official timer.
+3. Search/filter evidence, inspect original records, bookmark clues, mark suspicious entries and compare related records. Build board cards and directional links, and write shared notes.
+4. Reorder timeline cards by dragging or using Move Up/Move Down.
+5. Complete the report with conclusions, selected evidence and at least 20 characters of reasoning per finding. Correct conclusions need relevant support to earn points; selecting every record reduces credit.
+6. Submit one final report. Review your verified score and educational explanation (competition explanations may wait until the event closes).
+7. Select **Finish & Next Visitor** before handing the laptop over. It clears the previous nickname, notes, local drafts and arena session while retaining official results.
+
+Maximum base score is 1,000; up to 200 speed points require at least 70% accuracy. Hints deduct the amount published on the setup screen. Scores are ranked separately by solo/team, case version, difficulty and event. Use **Hall of Fame → Digital Detective** to select a comparable board.
+
+Progress saves automatically and can recover after refresh. The server timer continues during disconnections. At expiry, the last server-saved report draft is scored. Reconnect before submission or session handover. See [the full rules and event guide](DIGITAL-DETECTIVE.md).
 
 ## Zero Point
 
@@ -75,7 +91,7 @@ Neon Snake is a keyboard-only survival challenge. It is intentionally harder tha
 3. Avoid red **−150** corruption: it resets your combo and removes two tail segments. Scores never fall below zero.
 4. Gold **+350** data appears periodically and expires after 55 moves. A shield **S** absorbs one sentinel or pulse-gate hit, but costs **−100** when used.
 5. Avoid walls, your own body, moving sentinels, and live red gates. Gates flash amber before becoming lethal.
-6. Every four food pickups raises speed, up to level 8, and can add a firewall block. Survive for three minutes or set your best score before crashing.
+6. Every three food pickups and every 20 seconds add a difficulty level, up to level 12. Movement speeds up from 155 ms to 58 ms per move. Level-ups add firewall blocks away from your head, with two blocks from level 6 onward; higher levels add more corruption and longer live-gate windows. Survive for three minutes or set your best score before crashing.
 7. When the run ends, review points earned, points lost, best combo, and data collected. Press **Play Again** for a fresh grid.
 
 Completed Neon Snake scores are submitted to the live Hall of Fame. Keyboard controls are required; reaction and timing differences between devices mean scores are not independently verified competition results.

@@ -26,16 +26,20 @@ export type SnakeState = {
 
 export const BOARD = { width: 24, height: 20 };
 export const RUN_LIMIT_MS = 180_000;
+export const MAX_LEVEL = 12;
+export const difficultyLevel = (foods: number, elapsedMs: number) => Math.min(MAX_LEVEL, 1 + Math.floor(foods / 3) + Math.floor(elapsedMs / 20_000));
 const vectors: Record<Direction, Cell> = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
 const opposites: Record<Direction, Direction> = { up: "down", down: "up", left: "right", right: "left" };
 export const sameCell = (a: Cell, b: Cell) => a.x === b.x && a.y === b.y;
 
 export function gateCells(): Cell[] {
-  return [{ x: 7, y: 5 }, { x: 8, y: 5 }, { x: 9, y: 5 }, { x: 14, y: 14 }, { x: 15, y: 14 }, { x: 16, y: 14 }];
+  return [{ x: 7, y: 5 }, { x: 8, y: 5 }, { x: 9, y: 5 }, { x: 14, y: 14 }, { x: 15, y: 14 }, { x: 16, y: 14 },
+    { x: 5, y: 13 }, { x: 5, y: 14 }, { x: 18, y: 5 }, { x: 18, y: 6 }];
 }
-export function gatePhase(tick: number): "safe" | "warning" | "active" {
+export function gatePhase(tick: number, level = 1): "safe" | "warning" | "active" {
   const phase = tick % 48;
-  return phase >= 28 ? "active" : phase >= 22 ? "warning" : "safe";
+  const liveAt = Math.max(18, 28 - Math.floor((level - 1) / 2) * 2);
+  return phase >= liveAt ? "active" : phase >= liveAt - 6 ? "warning" : "safe";
 }
 export function dronesAt(tick: number): Cell[] {
   const distance = (tick: number) => {
@@ -45,24 +49,25 @@ export function dronesAt(tick: number): Cell[] {
   return [{ x: distance(tick), y: 2 }, { x: BOARD.width - 1 - distance(tick), y: BOARD.height - 3 }];
 }
 export function stepDuration(level: number, boost = false): number {
-  return Math.round(Math.max(70, 170 - (level - 1) * 14) * (boost ? 0.65 : 1));
+  return Math.round(Math.max(58, 155 - (level - 1) * 9) * (boost ? 0.65 : 1));
 }
 
-function vacantCell(state: SnakeState, random: () => number): Cell | undefined {
+function vacantCell(state: SnakeState, random: () => number, minimumDistance = 0): Cell | undefined {
   const blocked = [...state.body, ...state.walls, ...state.pickups, ...gateCells()];
   const candidates: Cell[] = [];
   for (let y = 1; y < BOARD.height - 1; y++) {
     if (y === 2 || y === BOARD.height - 3) continue;
     for (let x = 1; x < BOARD.width - 1; x++) {
       const cell = { x, y };
-      if (!blocked.some((other) => sameCell(cell, other))) candidates.push(cell);
+      if (Math.abs(cell.x - state.body[0].x) + Math.abs(cell.y - state.body[0].y) >= minimumDistance &&
+        !blocked.some((other) => sameCell(cell, other))) candidates.push(cell);
     }
   }
   return candidates[Math.min(candidates.length - 1, Math.max(0, Math.floor(random() * candidates.length)))];
 }
 
-function addPickup(state: SnakeState, kind: Pickup["kind"], random: () => number) {
-  const cell = vacantCell(state, random);
+function addPickup(state: SnakeState, kind: Pickup["kind"], random: () => number, minimumDistance = 0) {
+  const cell = vacantCell(state, random, minimumDistance);
   if (cell) state.pickups.push({ ...cell, kind, ...(kind === "bonus" ? { expiresAt: state.tick + 55 } : {}) });
 }
 
@@ -117,7 +122,7 @@ export function advanceSnake(current: SnakeState, boost = false, random: () => n
     state.notice = notice;
   };
   if (boost) applyScore(-5, "BOOST · −5 / STEP");
-  const hitGate = gatePhase(state.tick) === "active" && gateCells().some((cell) => sameCell(cell, head));
+   const hitGate = gatePhase(state.tick, state.level) === "active" && gateCells().some((cell) => sameCell(cell, head));
   const hitDrone = dronesAt(state.tick).some((cell) => sameCell(cell, head));
   if (hitGate || hitDrone) {
     if (!state.shield) return end(hitGate ? "A live pulse gate caught you" : "Sentinel collision");
@@ -135,13 +140,7 @@ export function advanceSnake(current: SnakeState, boost = false, random: () => n
       const points = (pickup.kind === "bonus" ? 350 : 100) * state.combo;
       applyScore(points, `${pickup.kind === "bonus" ? "GOLD DATA" : "DATA"} +${points} · COMBO ×${state.combo}`);
       state.foods++;
-      state.level = Math.min(8, 1 + Math.floor(state.foods / 4));
       if (pickup.kind === "food") addPickup(state, "food", random);
-      if (state.foods % 4 === 0) {
-        // New walls appear away from the head so there is time to react.
-        const cell = vacantCell(state, random);
-        if (cell && Math.abs(cell.x - head.x) + Math.abs(cell.y - head.y) >= 5) state.walls.push(cell);
-      }
       if (state.foods % 5 === 0 && !state.pickups.some((item) => item.kind === "bonus")) addPickup(state, "bonus", random);
       if (state.foods % 6 === 0 && !state.shield && !state.pickups.some((item) => item.kind === "shield")) addPickup(state, "shield", random);
     } else if (pickup.kind === "poison") {
@@ -156,6 +155,19 @@ export function advanceSnake(current: SnakeState, boost = false, random: () => n
     }
   }
   if (state.tick - state.lastFoodTick > 60) state.combo = 0;
+  const nextLevel = difficultyLevel(state.foods, state.elapsedMs);
+  if (nextLevel > state.level) {
+    state.level = nextLevel;
+    // Reserve patrol lanes and give at least five moves' distance from newly spawned hazards.
+    for (let index = 0; index < (nextLevel >= 6 ? 2 : 1) && state.walls.length < 24; index++) {
+      const cell = vacantCell(state, random, 5);
+      if (cell) state.walls.push(cell);
+    }
+    const corruptionTarget = Math.min(5, 2 + Math.floor((nextLevel - 1) / 3));
+    const missing = corruptionTarget - state.pickups.filter((item) => item.kind === "poison").length;
+    for (let index = 0; index < missing; index++) addPickup(state, "poison", random, 5);
+    state.notice = `LEVEL ${state.level} · GRID PRESSURE RISING`;
+  }
   if (!state.pickups.some((item) => item.kind === "food")) return end("All data collected. Arena cleared!");
   return state;
 }

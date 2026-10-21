@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import {
   ArrowUpRight,
   AudioLines,
@@ -28,9 +28,13 @@ import MythFactGame from "../games/myth-fact/MythFactGame";
 import { useLiveData, type Overview, type Rankings } from "./arena-data";
 import { setSoundMuted, soundIsMuted } from "./sound";
 import MythFactAdmin from "./MythFactAdmin";
+import { api as detectiveApi, clearDetectiveStorage } from "../games/digital-detective/api";
+const DigitalDetectiveGame = lazy(() => import("../games/digital-detective/DigitalDetectiveGame"));
+const DetectiveAdmin = lazy(() => import("../games/digital-detective/DetectiveAdmin"));
+const DetectiveLeaderboard = lazy(() => import("../games/digital-detective/DetectiveLeaderboard"));
 import CyberLab from "./CyberLab";
 
-type Page = "home" | "games" | "zero-point" | "target-rush" | "perfect-align" | "brain-firewall" | "snake" | "myth-fact" | "leaderboard" | "cyber-lab" | "admin";
+type Page = "home" | "games" | "zero-point" | "target-rush" | "perfect-align" | "brain-firewall" | "snake" | "myth-fact" | "digital-detective" | "leaderboard" | "cyber-lab" | "admin";
 type AdminUser = { id: number; username: string; role: string };
 
 const games = [
@@ -108,6 +112,8 @@ const games = [
   }
 ];
 
+games.push({ number: "07", id: "digital-detective", title: "Digital Detective", category: "FORENSICS", description: "Follow the evidence. Reconstruct a cyber incident solo or as a team around one laptop.", difficulty: "FOUR LEVELS · SOLO / TEAM", duration: "8–12 MIN", icon: Shield, color: "cyan", record: "—" });
+
 const navItems: { label: string; page: Page; icon: typeof Gamepad2 }[] = [
   { label: "Arena", page: "home", icon: Command },
   { label: "Challenges", page: "games", icon: Gamepad2 },
@@ -116,12 +122,16 @@ const navItems: { label: string; page: Page; icon: typeof Gamepad2 }[] = [
 ];
 
 function App() {
-  const [page, setPage] = useState<Page>(() => window.location.pathname === "/staff" ? "admin" : "home");
+  const [page, setPage] = useState<Page>(() => window.location.pathname === "/staff" ? "admin" : window.location.pathname === "/digital-detective" ? "digital-detective" : "home");
   const [menuOpen, setMenuOpen] = useState(false);
   const [admin, setAdmin] = useState<AdminUser | null>(null);
   const [loginOpen, setLoginOpen] = useState(false);
   const [muted, setMuted] = useState(() => soundIsMuted());
   const [health, setHealth] = useState<"checking" | "online" | "offline">("checking");
+  const [detectiveHasSession, setDetectiveHasSession] = useState(false);
+  const [pendingDetectivePage, setPendingDetectivePage] = useState<Page | null>(null);
+  const [detectiveResetBusy, setDetectiveResetBusy] = useState(false);
+  const [detectiveResetError, setDetectiveResetError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -154,11 +164,26 @@ function App() {
   }, []);
 
   const navigate = (next: Page) => {
+    if (page === "digital-detective" && next !== "digital-detective" && detectiveHasSession) {
+      setPendingDetectivePage(next); setDetectiveResetError(""); return;
+    }
     setPage(next);
-    const nextPath = next === "admin" ? "/staff" : "/";
+    const nextPath = next === "admin" ? "/staff" : next === "digital-detective" ? "/digital-detective" : "/";
     if (window.location.pathname !== nextPath) window.history.pushState(null, "", nextPath);
     setMenuOpen(false);
     setLoginOpen(false);
+  };
+  const finishDetectiveNavigation = async () => {
+    if (!pendingDetectivePage) return;
+    setDetectiveResetBusy(true); setDetectiveResetError("");
+    try {
+      await detectiveApi("/reset", "POST"); clearDetectiveStorage(); setAdmin(null); setDetectiveHasSession(false);
+      const next = pendingDetectivePage;
+      setPendingDetectivePage(null); setPage(next);
+      window.history.pushState(null, "", next === "admin" ? "/staff" : "/");
+      setMenuOpen(false); setLoginOpen(next === "admin");
+    } catch (e) { setDetectiveResetError(`${(e as Error).message} Your investigation is still open. Retry before handing over this device.`); }
+    finally { setDetectiveResetBusy(false); }
   };
 
   return (
@@ -194,6 +219,7 @@ function App() {
       </header>
 
       <main>
+        <Suspense fallback={<div className="page-content interior-page" role="status">Opening investigation tools…</div>}>
         {page === "home" && <HomePage onNavigate={navigate} />}
         {page === "games" && <GamesPage onNavigate={navigate} />}
         {page === "zero-point" && <ZeroPointGame onBack={() => navigate("games")} />}
@@ -202,11 +228,13 @@ function App() {
         {page === "brain-firewall" && <BrainFirewallGame onBack={() => navigate("games")} />}
         {page === "snake" && <SnakeGame onBack={() => navigate("games")} />}
         {page === "myth-fact" && <MythFactGame onBack={() => navigate("games")} />}
+        {page === "digital-detective" && <DigitalDetectiveGame onBack={() => navigate("games")} onSessionChange={setDetectiveHasSession} />}
         {page === "leaderboard" && <LeaderboardPage />}
         {page === "cyber-lab" && <CyberLab />}
         {page === "admin" && <AdminPage admin={admin} onLogout={() => {
           fetch("/api/admin/logout", { method: "POST" }).then(() => { setAdmin(null); navigate("home"); });
         }} />}
+        </Suspense>
       </main>
 
       <footer className="site-footer">
@@ -216,6 +244,7 @@ function App() {
       </footer>
 
       {loginOpen && <AdminLogin onClose={() => { setLoginOpen(false); if (!admin && window.location.pathname === "/staff") navigate("home"); }} onSuccess={(user) => { setAdmin(user); navigate("admin"); }} />}
+      {pendingDetectivePage && <div className="modal-backdrop"><section className="login-modal dd-reset-dialog" role="dialog" aria-modal="true" aria-labelledby="detective-exit-title" onKeyDown={e => { if (e.key === "Escape" && !detectiveResetBusy) setPendingDetectivePage(null); }}><span className="eyebrow">INVESTIGATION SESSION</span><h2 id="detective-exit-title">Finish & leave?</h2><p>Clear this device's investigation notes, nickname and signed-in session before leaving. Official scores and submitted reports remain saved.</p>{detectiveResetError && <p className="login-error" role="alert">{detectiveResetError}</p>}<div className="dd-tools"><button autoFocus className="outline-button" disabled={detectiveResetBusy} onClick={() => setPendingDetectivePage(null)}>CONTINUE INVESTIGATING</button><button className="primary-button" disabled={detectiveResetBusy} onClick={() => void finishDetectiveNavigation()}>{detectiveResetBusy ? "FINISHING…" : "FINISH & LEAVE"}</button></div></section></div>}
       <span className="sound-state" aria-live="polite">{muted ? "Sound muted" : "Sound enabled"}</span>
     </div>
   );
@@ -234,7 +263,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: Page) => void }) {
         <div className="hero-copy">
           <div className="eyebrow"><span className="eyebrow-line" /> YOUR NEXT MISSION STARTS HERE</div>
           <h1>PLAY THE<br /><span>UNKNOWN.</span></h1>
-          <p className="hero-description">Six challenges. One arena. Test your reflexes, sharpen your instincts, and find out if you've got what it takes.</p>
+          <p className="hero-description">{games.length} challenges. One arena. Test your reflexes, sharpen your instincts, and find out if you've got what it takes.</p>
           <div className="hero-buttons">
             <button className="primary-button" onClick={() => onNavigate("games")}>ENTER THE ARENA <ArrowUpRight size={17} /></button>
             <button className="text-button" onClick={() => onNavigate("leaderboard")}><Trophy size={15} /> VIEW HALL OF FAME</button>
@@ -260,7 +289,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: Page) => void }) {
 
       <section className="challenge-section">
         <div className="section-heading">
-          <div><span className="eyebrow"><span className="eyebrow-line" /> CHOOSE YOUR CHALLENGE</span><h2>Six ways to <span>make your mark.</span></h2></div>
+          <div><span className="eyebrow"><span className="eyebrow-line" /> CHOOSE YOUR CHALLENGE</span><h2>{games.length} ways to <span>make your mark.</span></h2></div>
           <button className="section-link" onClick={() => onNavigate("games")}>ALL CHALLENGES <ArrowUpRight size={15} /></button>
         </div>
         <div className="game-grid">
@@ -273,7 +302,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: Page) => void }) {
               <h3>{title}</h3>
               <p>{description}</p>
               <div className="card-data"><span>{difficulty}</span><span>{duration}</span></div>
-              <div className="card-bottom"><span>TOP SCORE <b>{records?.[id]?.entries[0]?.score.toLocaleString() ?? (error ? "OFFLINE" : records ? "—" : "…")}</b></span><span className="card-play">PLAY <ChevronRight size={15} /></span></div>
+              <div className="card-bottom"><span>{id === "digital-detective" ? "RECORDS" : "TOP SCORE"} <b>{id === "digital-detective" ? "CASE BOARDS" : records?.[id]?.entries[0]?.score.toLocaleString() ?? (error ? "OFFLINE" : records ? "—" : "…")}</b></span><span className="card-play">PLAY <ChevronRight size={15} /></span></div>
             </article>
           ))}
         </div>
@@ -295,7 +324,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: Page) => void }) {
 }
 
 function GamesPage({ onNavigate }: { onNavigate: (page: Page) => void }) {
-  return <div className="page-content interior-page"><PageHeading label="SELECT YOUR MISSION" title={<>THE <span>ARENA.</span></>} description="Six playable challenges. Choose your mission, read its quick guide, and take on the arena." />
+  return <div className="page-content interior-page"><PageHeading label="SELECT YOUR MISSION" title={<>THE <span>ARENA.</span></>} description={`${games.length} playable challenges. Choose your mission, read its quick guide, and take on the arena.`} />
     <div className="game-grid expanded-games">{games.map(({ id, number, title, category, description, difficulty, duration, icon: Icon, color }) => <article className={`game-card ${color}`} key={title} role="button" tabIndex={0} aria-label={`Play ${title}`}
       onClick={() => onNavigate(id as Page)}
       onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onNavigate(id as Page); } }}>
@@ -311,7 +340,7 @@ function LeaderboardPage() {
   return <div className="page-content interior-page"><PageHeading label="THE BEST OF THE BEST" title={<>HALL OF <span>FAME.</span></>} description="Every legend starts with a first attempt. Myth or Fact boards are split by mode and rule version so only comparable runs compete." />
     <div className="leaderboard-panel">
       <div className="leaderboard-tabs" role="tablist" aria-label="Game rankings">{games.map((game) => <button role="tab" aria-selected={selected === game.id} aria-controls="game-rankings" id={`tab-${game.id}`} className={selected === game.id ? "selected" : ""} key={game.id} onClick={() => setSelected(game.id)}>{game.title.toUpperCase()}</button>)}</div>
-      {selected === "myth-fact" ? <MythFactLeaderboard /> : <div id="game-rankings" role="tabpanel" aria-labelledby={`tab-${selected}`} aria-busy={!data && !error}>
+      {selected === "myth-fact" ? <MythFactLeaderboard /> : selected === "digital-detective" ? <div id="game-rankings" role="tabpanel" aria-labelledby="tab-digital-detective"><DetectiveLeaderboard /></div> : <div id="game-rankings" role="tabpanel" aria-labelledby={`tab-${selected}`} aria-busy={!data && !error}>
         <div className="leaderboard-head"><span>RANK</span><span>CHALLENGER</span><span>SCORE</span><span>DATE</span></div>
         {error && <div className="ranking-error" role="status">Connection interrupted. {data ? "Showing the last received rankings." : "Reconnecting to the arena…"}</div>}
         {data?.entries.length ? <div className="leaderboard-rows">{data.entries.map((entry) => <div className={`leaderboard-row ${entry.rank <= 3 ? "podium-row" : ""}`} key={entry.id}><span className="rank-number">{entry.rank <= 3 && <Trophy size={14} />} {String(entry.rank).padStart(2, "0")}</span><strong>{entry.challenger}</strong><b>{entry.score.toLocaleString()}</b><time dateTime={new Date(entry.completedAt).toISOString()} title={new Date(entry.completedAt).toLocaleString()}>{new Date(entry.completedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</time></div>)}</div> : <div className="leaderboard-empty"><Trophy size={28} /><strong>{!data ? error ? "RANKINGS UNAVAILABLE" : "LOADING RANKINGS…" : "THE PODIUM IS EMPTY"}</strong><p>{!data ? "Connecting to live event scores." : "Be the first to put your name on the board."}</p><span>THE NEXT RECORD COULD BE YOURS</span></div>}
@@ -349,7 +378,7 @@ function MythFactLeaderboard() {
 
 function AdminPage({ admin, onLogout }: { admin: AdminUser | null; onLogout: () => void }) {
   if (!admin) return <div className="page-content interior-page"><PageHeading label="RESTRICTED AREA" title={<>STAFF <span>ACCESS.</span></>} description="This area is restricted to authorized event staff." /></div>;
-  return <ConnectedAdminPage admin={admin} onLogout={onLogout} />;
+  return <><ConnectedAdminPage admin={admin} onLogout={onLogout} /><div className="page-content"><DetectiveAdmin role={admin.role} /></div></>;
 }
 
 function ConnectedAdminPage({ admin, onLogout }: { admin: AdminUser; onLogout: () => void }) {

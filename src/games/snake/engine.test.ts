@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { advanceSnake, BOARD, createSnake, dronesAt, gateCells, gatePhase, queueTurn, RUN_LIMIT_MS, sameCell, stepDuration, type SnakeState } from "./engine";
+import { advanceSnake, BOARD, createSnake, difficultyLevel, dronesAt, gateCells, gatePhase, MAX_LEVEL, queueTurn, RUN_LIMIT_MS, sameCell, stepDuration, type SnakeState } from "./engine";
 
 function run(overrides: Partial<SnakeState> = {}): SnakeState {
   return {
@@ -91,15 +91,42 @@ describe("Neon Snake pickups, difficulty, and score accounting", () => {
     expect(next.body).toHaveLength(3);
   });
 
-  it("increases speed every four pickups and caps it at level eight", () => {
-    const fourth = advanceSnake(run({ foods: 3, pickups: [{ x: 11, y: 10, kind: "food" }] }), false, () => .99);
+  it("increases speed every three pickups and caps it at level twelve", () => {
+    const fourth = advanceSnake(run({ foods: 2, pickups: [{ x: 11, y: 10, kind: "food" }] }), false, () => .99);
     expect(fourth.level).toBe(2);
     expect(fourth.walls).toHaveLength(1);
     const wall = fourth.walls[0];
     expect(Math.abs(wall.x - fourth.body[0].x) + Math.abs(wall.y - fourth.body[0].y)).toBeGreaterThanOrEqual(5);
     expect(stepDuration(2)).toBeLessThan(stepDuration(1));
-    expect(advanceSnake(run({ foods: 100, pickups: [{ x: 11, y: 10, kind: "food" }] })).level).toBe(8);
-    expect(stepDuration(8)).toBe(72);
+    expect(advanceSnake(run({ foods: 100, pickups: [{ x: 11, y: 10, kind: "food" }] })).level).toBe(MAX_LEVEL);
+    expect(stepDuration(MAX_LEVEL)).toBe(58);
+    for (let level = 2; level <= MAX_LEVEL; level++) expect(stepDuration(level)).toBeLessThan(stepDuration(level - 1));
+  });
+
+  it("escalates without collecting food and spawns new hazards away from the head", () => {
+    const next = advanceSnake(run({ elapsedMs: 60_000 - 1, level: 3 }), false, () => 0);
+    expect(next.level).toBe(4);
+    expect(difficultyLevel(9, 60_000)).toBe(7);
+    const hazards = [...next.walls, ...next.pickups.filter((item) => item.kind === "poison")];
+    expect(next.walls).toHaveLength(1);
+    expect(next.pickups.filter((item) => item.kind === "poison")).toHaveLength(3);
+    for (const cell of hazards) {
+      expect(Math.abs(cell.x - next.body[0].x) + Math.abs(cell.y - next.body[0].y)).toBeGreaterThanOrEqual(5);
+      expect([...next.body, ...gateCells()].some((blocked) => sameCell(blocked, cell))).toBe(false);
+      expect([2, BOARD.height - 3]).not.toContain(cell.y);
+    }
+    expect(advanceSnake(next).walls).toHaveLength(1);
+  });
+
+  it("keeps a six-move gate warning while extending live windows at high levels", () => {
+    const phases = (level: number) => Array.from({ length: 48 }, (_, tick) => gatePhase(tick, level));
+    for (let level = 1; level <= MAX_LEVEL; level++) {
+      expect(phases(level).filter((phase) => phase === "warning")).toHaveLength(6);
+    }
+    expect(phases(MAX_LEVEL).filter((phase) => phase === "active").length)
+      .toBeGreaterThan(phases(1).filter((phase) => phase === "active").length);
+    const nearGate = run({ tick: 20, level: MAX_LEVEL, body: [{ x: 6, y: 5 }, { x: 5, y: 5 }, { x: 4, y: 5 }] });
+    expect(advanceSnake(nearGate).reason).toBe("A live pulse gate caught you");
   });
 
   it("spawns timed gold and shields at the documented pickup milestones", () => {

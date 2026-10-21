@@ -2,6 +2,7 @@ import Database from "better-sqlite3";
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { initializeMythFact } from "./myth-fact/model.js";
+import { initializeDetective } from "./digital-detective/model.js";
 
 const databasePath = resolve(process.env.DATABASE_PATH ?? "./data/emucon.sqlite");
 mkdirSync(dirname(databasePath), { recursive: true });
@@ -42,7 +43,7 @@ database.exec(`
   CREATE TABLE IF NOT EXISTS game_sessions (
     id TEXT PRIMARY KEY,
     participant_id TEXT NOT NULL REFERENCES participants(id),
-    game TEXT NOT NULL CHECK (game IN ('zero-point', 'target-rush', 'perfect-align', 'brain-firewall', 'snake', 'myth-fact')),
+    game TEXT NOT NULL CHECK (game IN ('zero-point', 'target-rush', 'perfect-align', 'brain-firewall', 'snake', 'myth-fact', 'digital-detective')),
     challenger TEXT NOT NULL,
     started_at INTEGER NOT NULL,
     last_seen_at INTEGER NOT NULL,
@@ -54,15 +55,17 @@ database.exec(`
 `);
 
 // SQLite cannot alter a CHECK constraint. Upgrade existing event databases atomically,
-// retaining every session and score while enabling the fifth game.
+// retaining every session, score and existing extension foreign-key reference.
 const gameTable = database.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'game_sessions'").get() as { sql: string };
-if (!gameTable.sql.includes("'myth-fact'")) {
-  database.transaction(() => {
-    database.exec(`
+if (!gameTable.sql.includes("'digital-detective'")) {
+  database.pragma("foreign_keys = OFF");
+  try {
+    database.transaction(() => {
+      database.exec(`
       CREATE TABLE game_sessions_upgrade (
         id TEXT PRIMARY KEY,
         participant_id TEXT NOT NULL REFERENCES participants(id),
-        game TEXT NOT NULL CHECK (game IN ('zero-point', 'target-rush', 'perfect-align', 'brain-firewall', 'snake', 'myth-fact')),
+        game TEXT NOT NULL CHECK (game IN ('zero-point', 'target-rush', 'perfect-align', 'brain-firewall', 'snake', 'myth-fact', 'digital-detective')),
         challenger TEXT NOT NULL,
         started_at INTEGER NOT NULL,
         last_seen_at INTEGER NOT NULL,
@@ -76,10 +79,13 @@ if (!gameTable.sql.includes("'myth-fact'")) {
       CREATE INDEX game_rankings_idx ON game_sessions(game, score DESC, completed_at);
       CREATE INDEX game_activity_idx ON game_sessions(last_seen_at) WHERE completed_at IS NULL;
     `);
-  })();
+      if ((database.pragma("foreign_key_check") as unknown[]).length) throw new Error("Game migration failed foreign-key integrity check.");
+    })();
+  } finally { database.pragma("foreign_keys = ON"); }
 }
 
 initializeMythFact(database);
+initializeDetective(database);
 
 export function closeDatabase(): void {
   database.close();

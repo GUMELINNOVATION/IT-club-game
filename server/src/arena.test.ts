@@ -65,6 +65,8 @@ beforeAll(async () => {
     );
     INSERT INTO participants VALUES ('legacy-participant', 1);
     INSERT INTO game_sessions VALUES ('legacy-run', 'legacy-participant', 'perfect-align', 'Legacy Challenger', 1, 2, 2, 4321);
+    CREATE TABLE extension_fixture(id TEXT PRIMARY KEY REFERENCES game_sessions(id), notes TEXT);
+    INSERT INTO extension_fixture VALUES ('legacy-run', 'Preserve extension foreign keys');
   `);
   legacy.close();
   await boot();
@@ -89,7 +91,11 @@ describe("connected arena API", () => {
     const result = await (await api("/api/leaderboard/perfect-align")).json();
     expect(result.entries[0]).toMatchObject({ id: "legacy-run", challenger: "Legacy Challenger", score: 4321 });
     expect((db.prepare("SELECT sql FROM sqlite_master WHERE name = 'game_sessions'").get() as { sql: string }).sql).toContain("'snake'");
+    expect((db.prepare("SELECT sql FROM sqlite_master WHERE name = 'game_sessions'").get() as { sql: string }).sql).toContain("'digital-detective'");
+    expect(db.prepare("SELECT notes FROM extension_fixture").get()).toEqual({ notes: "Preserve extension foreign keys" });
+    expect(db.pragma("foreign_key_check")).toEqual([]);
     // Remove this fixture before the live activity scenarios below.
+    db.prepare("DELETE FROM extension_fixture WHERE id = 'legacy-run'").run();
     db.prepare("DELETE FROM game_sessions WHERE id = 'legacy-run'").run();
     db.prepare("DELETE FROM participants WHERE id = 'legacy-participant'").run();
   });
@@ -121,7 +127,7 @@ describe("connected arena API", () => {
       .toMatchObject({ participants: 2, gamesPlayed: 3, activeSessions: 0 });
   });
 
-  it("separates all six boards and supports anonymous zero-point scores", async () => {
+  it("separates all seven boards and supports anonymous zero-point scores", async () => {
     for (const game of ["target-rush", "perfect-align", "brain-firewall", "snake"]) {
       const id = await start(game, "");
       await api(`/api/play/${id}/complete`, "POST", { score: 0 });
@@ -129,8 +135,8 @@ describe("connected arena API", () => {
       expect(result.entries).toHaveLength(1);
       expect(result.entries[0]).toMatchObject({ rank: 1, challenger: "Anonymous Challenger", score: 0 });
     }
-    expect(Object.keys(await (await api("/api/leaderboards")).json())).toHaveLength(6);
-    expect(await (await api("/api/admin/overview", "GET", undefined, true)).json()).toMatchObject({ configuredGames: 6 });
+    expect(Object.keys(await (await api("/api/leaderboards")).json())).toHaveLength(7);
+    expect(await (await api("/api/admin/overview", "GET", undefined, true)).json()).toMatchObject({ configuredGames: 7 });
   });
 
   it("saves and ranks Snake runs, rejects invalid scores, and treats retries as one completed run", async () => {

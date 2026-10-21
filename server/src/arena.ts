@@ -1,10 +1,10 @@
 import { randomUUID } from "node:crypto";
 import type Database from "better-sqlite3";
 
-export const gameIds = ["zero-point", "target-rush", "perfect-align", "brain-firewall", "snake", "myth-fact"] as const;
+export const gameIds = ["zero-point", "target-rush", "perfect-align", "brain-firewall", "snake", "myth-fact", "digital-detective"] as const;
 export type GameId = typeof gameIds[number];
 export const scoreLimits: Record<GameId, number> = {
-  "zero-point": 80_000, "target-rush": 10_000_000, "perfect-align": 100_000, "brain-firewall": 1_000_000, "snake": 10_000_000, "myth-fact": 1_000_000
+  "zero-point": 80_000, "target-rush": 10_000_000, "perfect-align": 100_000, "brain-firewall": 1_000_000, "snake": 10_000_000, "myth-fact": 1_000_000, "digital-detective": 1200
 };
 const activeWindowMs = 90_000;
 
@@ -28,6 +28,7 @@ export function createArena(db: Database.Database) {
       const run = db.prepare("SELECT game, score, completed_at FROM game_sessions WHERE id = ?").get(id) as
         { game: GameId; score: number | null; completed_at: number | null } | undefined;
       if (!run) return "missing";
+      if (run.game === "digital-detective") return "invalid";
       if (run.game === "myth-fact") return "invalid"; // Only the server-owned answer engine can finalize this game.
       if (!Number.isSafeInteger(score) || score < 0 || score > scoreLimits[run.game]) return "invalid";
       if (run.completed_at !== null) return run.score === score ? "saved" : "conflict";
@@ -49,6 +50,7 @@ export function createArena(db: Database.Database) {
       };
     },
     rankings(game: GameId) {
+      if (game === "digital-detective") return { game, entries: [], updatedAt: new Date().toISOString(), segmented: true };
       if (game === "myth-fact") {
         // Homepage preview uses only the current default Classic/solo rules, never mixed modes.
         const current = databaseConfig();

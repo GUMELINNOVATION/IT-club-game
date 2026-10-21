@@ -11,7 +11,8 @@
     "start": "node --env-file-if-exists=.env dist-server/index.js",
     "admin:create": "node --env-file-if-exists=.env --import=tsx server/src/create-admin.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:browser": "playwright test"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.14",
@@ -26,6 +27,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@types/better-sqlite3": "^7.6.13",
     "@types/express": "^5.0.3",
     "@types/express-session": "^1.18.2",

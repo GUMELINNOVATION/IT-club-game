@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Keyboard, Pause, Play, RotateCcw, Shield, Trophy, Zap } from "lucide-react";
 import { ChallengerName, ScoreStatus, useGameSession } from "../../ui/arena-data";
-import { advanceSnake, BOARD, createSnake, dronesAt, gateCells, gatePhase, queueTurn, RUN_LIMIT_MS, stepDuration, type Direction, type SnakeState } from "./engine";
+import { advanceSnake, BOARD, createSnake, dronesAt, gateCells, gatePhase, MAX_LEVEL, queueTurn, RUN_LIMIT_MS, stepDuration, type Direction, type SnakeState } from "./engine";
 import "./snake.css";
 
 type Phase = "intro" | "countdown" | "running" | "paused" | "complete";
@@ -106,7 +106,7 @@ export default function SnakeGame({ onBack }: { onBack: () => void }) {
     };
   }, []);
 
-  const gateStatus = gatePhase(state.tick);
+  const gateStatus = gatePhase(state.tick, state.level);
   const secondsLeft = Math.ceil((RUN_LIMIT_MS - Math.min(state.elapsedMs, RUN_LIMIT_MS)) / 1000);
   return <div className="page-content interior-page snake-page">
     <button className="back-link" onClick={onBack}><ArrowLeft size={18} /> BACK TO CHALLENGES</button>
@@ -115,7 +115,7 @@ export default function SnakeGame({ onBack }: { onBack: () => void }) {
       <div><span className="eyebrow"><span className="eyebrow-line" /> CHALLENGE 05 · SURVIVAL</span>
         <h1>NEON <span>SNAKE.</span></h1>
         <p>Classic controls. Hostile territory. Outrun the sentinels, thread the pulse gates, and survive a grid that gets faster as you grow.</p>
-        <div className="snake-feature-list"><span><Keyboard size={20} /> ARROW-KEY CONTROL</span><span><Zap size={20} /> 8 SPEED LEVELS</span><span><Shield size={20} /> SHIELDS & PULSE GATES</span></div>
+        <div className="snake-feature-list"><span><Keyboard size={20} /> ARROW-KEY CONTROL</span><span><Zap size={20} /> {MAX_LEVEL} SPEED LEVELS</span><span><Shield size={20} /> ESCALATING GRID HAZARDS</span></div>
         <details open className="game-user-guide snake-guide"><summary>PLAYER BRIEFING · READ BEFORE STARTING</summary><ol>
           <li>Use <strong>↑ ↓ ← →</strong> to steer. You cannot reverse directly into your body. Two quick turns can be queued.</li>
           <li>Green <strong>+100</strong> data grows your snake. Chain pickups within 60 moves for up to a <strong>×5 combo</strong>.</li>
@@ -123,7 +123,7 @@ export default function SnakeGame({ onBack }: { onBack: () => void }) {
           <li>Every five food pickups reveals gold <strong>+350</strong> data. It expires after 55 moves. Every six may reveal a shield.</li>
           <li>Walls and your body are fatal. Red pulse gates and moving sentinels are fatal unless you have a shield; using it costs <strong>−100</strong>.</li>
           <li>Hold <strong>Space</strong> for a speed boost at <strong>−5 per move</strong>. Press <strong>P / Esc</strong> to pause. Survive three minutes or set a high score before you crash.</li>
-        </ol><p>Every four food pickups increases speed, up to level 8, and can add a firewall block. Gates flash amber before turning lethal. Switching tabs automatically pauses the run.</p></details>
+        </ol><p>Every three food pickups and every 20 seconds add a difficulty level, up to level {MAX_LEVEL}. Level-ups add distant firewall blocks; higher levels introduce more corruption and longer live-gate windows. Gates flash amber before turning lethal. Switching tabs automatically pauses the run.</p></details>
         <ChallengerName value={tracking.challenger} onChange={tracking.setChallenger} />
         <button className="primary-button" onClick={start}>ENTER THE GRID <ArrowRight size={18} /></button>
         <p className="local-score-note">Keyboard required. Your completed score joins the Neon Snake live rankings.</p>
@@ -133,7 +133,7 @@ export default function SnakeGame({ onBack }: { onBack: () => void }) {
       <div className="snake-heading"><div><span className="eyebrow">SURVIVAL · CHALLENGE 05</span><h1>NEON <span>SNAKE.</span></h1></div>
         {phase === "running" && <button className="outline-button" onClick={pause}><Pause size={17} /> PAUSE · P</button>}
       </div>
-      <div className="snake-hud"><div><span>SCORE</span><strong>{state.score.toLocaleString()}</strong></div><div><span>LEVEL</span><strong>{state.level}<small> / 8</small></strong></div><div><span>COMBO</span><strong>×{state.combo || 1}</strong></div><div><span>TIME LEFT</span><strong>{Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")}</strong></div><div><span>SHIELD</span><strong className={state.shield ? "shield-online" : ""}>{state.shield ? "READY" : "—"}</strong></div></div>
+      <div className="snake-hud"><div><span>SCORE</span><strong>{state.score.toLocaleString()}</strong></div><div><span>LEVEL</span><strong>{state.level}<small> / {MAX_LEVEL}</small></strong></div><div><span>COMBO</span><strong>×{state.combo || 1}</strong></div><div><span>TIME LEFT</span><strong>{Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")}</strong></div><div><span>SHIELD</span><strong className={state.shield ? "shield-online" : ""}>{state.shield ? "READY" : "—"}</strong></div></div>
       <div className={`snake-board ${boosting ? "snake-boosting" : ""}`} ref={boardRef} tabIndex={0} aria-label="Neon Snake arena. Arrow keys to steer, hold Space to boost, P to pause." aria-describedby="snake-controls">
         <svg viewBox={`0 0 ${BOARD.width * cellSize} ${BOARD.height * cellSize}`} role="img" aria-label={`Snake length ${state.body.length}. Score ${state.score}. Level ${state.level}.`}>
           <defs><pattern id="snake-grid" width={cellSize} height={cellSize} patternUnits="userSpaceOnUse"><path d={`M ${cellSize} 0 L 0 0 0 ${cellSize}`} fill="none" stroke="#183044" strokeWidth="1" /></pattern></defs>

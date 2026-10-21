@@ -255,7 +255,15 @@ export default function MythFactGame({ onBack }: { onBack: () => void }) {
     {error && <div className="myth-error" role="alert"><ShieldAlert size={16} /> {error}</div>}
 
     {!attempt && <section className="myth-intro">
-      <div className="eyebrow"><span className="eyebrow-line" /> CHALLENGE 06 · KNOWLEDGE</div>
+      <div className="myth-club-masthead">
+        <img src="/brand/it-club-logo.svg" alt="EMU Information Technologies Club emblem" />
+        <div>
+          <strong>EMU Information Technologies Club</strong>
+          <small>DIGITAL TRUTH · OFFICIAL CHALLENGE</small>
+        </div>
+        <img src="/brand/emu-logo.png" alt="Eastern Mediterranean University" />
+      </div>
+      <div className="eyebrow"><span className="eyebrow-line" /> CHALLENGE 06 · DIGITAL TRUTH</div>
       <h1>MYTH <span>OR FACT?</span></h1>
       <p>Two choices. One truth. Decide whether each digital claim is a myth or a fact, then defend your instinct under pressure.</p>
       <details open className="game-user-guide myth-guide">
@@ -426,6 +434,11 @@ export default function MythFactGame({ onBack }: { onBack: () => void }) {
       <div className="complete-actions">
         <button className="primary-button" onClick={again}><RotateCcw size={15} /> PLAY AGAIN</button>
         <button className="outline-button" onClick={() => { void newPlayer(); }}>NEW PLAYER · KIOSK RESET</button>
+      </div>
+      <div className="myth-club-signoff">
+        <img src="/brand/it-club-logo.svg" alt="EMU Information Technologies Club" />
+        <span>EMU INFORMATION TECHNOLOGIES CLUB · DIGITAL TRUTH CHALLENGE</span>
+        <img src="/brand/emu-logo.png" alt="Eastern Mediterranean University" />
       </div>
       <p className="local-score-note">Scores, timing, confidence, and answers are validated by the server. Completed scores appear on their mode-specific hall of fame.</p>
     </section>}
